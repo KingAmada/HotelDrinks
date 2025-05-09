@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Drinks On Demand - Fast Nationwide Delivery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <style>
+        :root {
+            --primary-color: #38bdf8; /* Sky 500 */
+            --primary-hover-color: #0ea5e9; /* Sky 600 */
+            --primary-dark-color: #0c4a6e; /* Sky 800 */
+            --secondary-color: #f0f4f8; /* Slate 100 (Light Gray BG) */
+            --text-color: #1e293b; /* Slate 800 */
+            --text-light-color: #475569; /* Slate 600 */
+            --border-color: #cbd5e1; /* Slate 300 */
+            --input-bg-color: #ffffff;
+            --card-bg-color: #ffffff;
+            --default-font: 'Inter', sans-serif;
+            --border-radius: 0.5rem; /* rounded-lg */
+            --input-border-radius: 0.375rem; /* rounded-md */
+        }
+
+        body { 
+            font-family: var(--default-font); 
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--secondary-color); }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        .btn {
+            padding: 0.75rem 1.5rem; border-radius: var(--input-border-radius); font-weight: 600;
+            transition: all 0.2s ease-in-out; display: inline-flex; align-items: center;
+            justify-content: center; gap: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1);
+        }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover-color); transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1); }
+        .btn-primary:disabled { background-color: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none;}
+        .btn-secondary { background-color: var(--card-bg-color); color: var(--primary-dark-color); border: 1px solid var(--border-color); }
+        .btn-secondary:hover { background-color: #f8fafc; transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);}
+
+        .nav-link.active { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); font-weight: 500;}
+        .nav-link:hover { color: var(--primary-hover-color); }
+
+        .card {
+            background-color: var(--card-bg-color); border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.07);
+            overflow: hidden;
+        }
+        .product-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); }
+        .product-image { width: 100%; height: 12rem; object-fit: cover; }
+        
+        .hero-image-container { width: 100%; height: 100%; min-height: 300px; }
+        .hero-image-container img { width: 100%; height: 100%; object-fit: cover; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;}
+        .modal-content { background-color: var(--card-bg-color); padding: 2rem; border-radius: var(--border-radius); width: 90%; max-width: 500px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); margin: auto;}
+        .modal-close { color: #9ca3af; float: right; font-size: 28px; font-weight: bold; cursor: pointer; transition: color 0.2s ease;}
+        .modal-close:hover { color: var(--text-color); }
+
+        main { padding-top: 5rem; }
+        #map { height: 280px; border-radius: var(--input-border-radius); margin-bottom: 1rem; border: 1px solid var(--border-color);}
+        .hotel-list-item { cursor: pointer; padding: 0.75rem 1rem; border-radius: var(--input-border-radius); transition: background-color 0.2s ease, border-color 0.2s ease; border: 1px solid transparent; }
+        .hotel-list-item:hover { background-color: #e0f2fe80; border-color: var(--primary-color); }
+        .hotel-list-item.selected { background-color: #bae6fd; color: var(--primary-dark-color); font-weight: 600; border-color: var(--primary-color); }
+
+        .why-us-card { background: var(--card-bg-color); border-radius: var(--border-radius); padding: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.07); text-align: center; }
+        .why-us-card i { font-size: 2.5rem; margin-bottom: 1rem; color: var(--primary-color); }
+        
+        .star-rating .fa-star { font-size: 2rem; color: #e5e7eb; cursor: pointer; transition: color 0.2s; }
+        .star-rating .fa-star.selected, .star-rating .fa-star:hover, .star-rating .fa-star:hover ~ .fa-star { color: #f59e0b; }
+        
+        .input-field, .select-field {
+            background-color: var(--input-bg-color); border: 1px solid var(--border-color);
+            border-radius: var(--input-border-radius); padding: 0.65rem 0.9rem; width: 100%;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease; font-size: 0.95rem; color: var(--text-color);
+        }
+        .input-field:focus, .select-field:focus {
+            outline: none; border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3);
+        }
+        .input-field::placeholder { color: #9ca3af; }
+        label { font-size: 0.875rem; font-weight: 500; color: var(--text-light-color); margin-bottom: 0.25rem; display: block; }
+        .form-group { margin-bottom: 1.25rem; }
+
+        .location-type-toggle button {
+            padding: 0.5rem 1rem; border: 1px solid var(--border-color); color: var(--text-light-color);
+            background-color: var(--input-bg-color); transition: all 0.2s ease;
+        }
+        .location-type-toggle button:first-child { border-top-left-radius: var(--input-border-radius); border-bottom-left-radius: var(--input-border-radius); border-right-width: 0.5px;}
+        .location-type-toggle button:last-child { border-top-right-radius: var(--input-border-radius); border-bottom-right-radius: var(--input-border-radius); border-left-width: 0.5px;}
+        .location-type-toggle button.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); z-index: 10; }
+        
+        /* Search input specific style */
+        #drink-search-input {
+            padding-left: 2.5rem; /* Space for icon */
+        }
+        .search-icon-wrapper {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light-color);
+        }
+
+        @media (max-width: 768px) {
+            .hero-text { text-align: center; }
+            .nav-links-desktop { display: none; }
+            .mobile-menu-button { display: block; }
+            main { padding-top: 4.5rem; }
+        }
+        @media (min-width: 769px) {
+            .mobile-menu-button { display: none; }
+            .nav-links-desktop { display: flex; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header class="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="#" class="text-2xl font-bold text-[var(--primary-dark-color)] flex items-center" onclick="showSection('home')">
+                        <i class="fas fa-glass-water mr-2 text-sky-500 text-3xl"></i>
+                        <span>HotelDrinks</span>
+                    </a>
+                </div>
+                <nav class="hidden md:flex items-center space-x-1 nav-links-desktop"> 
+                    <a href="#" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-sky-600 active" onclick="setActiveLink(this); showSection('home')">Home</a>
+                    <a href="#" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-sky-600" onclick="setActiveLink(this); showSection('order')">Order Now</a>
+                    <a href="#" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-sky-600" onclick="setActiveLink(this); showSection('how-it-works')">How It Works</a>
+                    <a href="#" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-sky-600" onclick="setActiveLink(this); showSection('vendor-signup')">Become a Vendor</a>
+                    <a href="#" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-sky-600" onclick="setActiveLink(this); showSection('contact')">Contact Us</a>
+                    <a href="#" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-sky-600" onclick="setActiveLink(this); showSection('faq')">FAQ</a>
+                    <div id="auth-links-desktop" class="flex items-center space-x-2 ml-2">
+                        <a href="#" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-sky-600" onclick="setActiveLink(this); showSection('login')">Login</a>
+                        <a href="#" class="btn btn-primary text-sm py-1.5 px-3" onclick="setActiveLink(this); showSection('register')">Sign Up</a>
+                    </div>
+                    <div id="user-actions-desktop" class="hidden items-center space-x-2 ml-2"> 
+                        <span id="welcome-user-desktop" class="text-sm font-medium text-slate-700"></span>
+                        <a href="#" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:text-sky-600" onclick="logoutUser()">Logout</a>
+                    </div>
+                </nav>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-button" class="text-slate-700 hover:text-sky-600 focus:outline-none focus:text-sky-600">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden bg-white shadow-lg border-t border-slate-200">
+            <a href="#" class="block px-4 py-3 text-base text-slate-700 hover:bg-sky-50 hover:text-sky-600" onclick="setActiveLink(this, true); showSection('home'); toggleMobileMenu();">Home</a>
+            <a href="#" class="block px-4 py-3 text-base text-slate-700 hover:bg-sky-50 hover:text-sky-600" onclick="setActiveLink(this, true); showSection('order'); toggleMobileMenu();">Order Now</a>
+            <a href="#" class="block px-4 py-3 text-base text-slate-700 hover:bg-sky-50 hover:text-sky-600" onclick="setActiveLink(this, true); showSection('how-it-works'); toggleMobileMenu();">How It Works</a>
+            <a href="#" class="block px-4 py-3 text-base text-slate-700 hover:bg-sky-50 hover:text-sky-600" onclick="setActiveLink(this, true); showSection('vendor-signup'); toggleMobileMenu();">Become a Vendor</a>
+            <a href="#" class="block px-4 py-3 text-base text-slate-700 hover:bg-sky-50 hover:text-sky-600" onclick="setActiveLink(this, true); showSection('contact'); toggleMobileMenu();">Contact Us</a>
+            <a href="#" class="block px-4 py-3 text-base text-slate-700 hover:bg-sky-50 hover:text-sky-600" onclick="setActiveLink(this, true); showSection('faq'); toggleMobileMenu();">FAQ</a>
+            <div id="auth-links-mobile" class="border-t border-slate-200 mt-2 pt-2">
+                <a href="#" class="block px-4 py-3 text-base text-slate-700 hover:bg-sky-50 hover:text-sky-600" onclick="setActiveLink(this, true); showSection('login'); toggleMobileMenu();">Login</a>
+                <a href="#" class="block px-4 py-3 text-base text-sky-600 font-semibold hover:bg-sky-50" onclick="setActiveLink(this, true); showSection('register'); toggleMobileMenu();">Sign Up</a>
+            </div>
+            <div id="user-actions-mobile" class="hidden border-t border-slate-200 mt-2 pt-2">
+                 <span id="welcome-user-mobile" class="block px-4 py-3 text-base font-medium text-slate-700"></span>
+                <a href="#" class="block px-4 py-3 text-base text-slate-700 hover:bg-sky-50 hover:text-sky-600" onclick="logoutUser(); toggleMobileMenu();">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
+        <section id="home" class="page-section">
+            <div class="bg-gradient-to-br from-sky-400 to-sky-600 rounded-xl shadow-2xl overflow-hidden text-white">
+                <div class="md:flex">
+                    <div class="md:w-1/2 p-8 md:p-16 flex flex-col justify-center hero-text">
+                        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-6 leading-tight">Hotel Drinks are Expensive</h1>
+                        <p class="text-xl sm:text-2xl text-sky-100 mb-8">Buy from us, we're just outside 24/7!</p>
+                        <button class="btn bg-white text-sky-600 hover:bg-sky-50 font-semibold py-3 px-10 rounded-lg text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 self-start md:self-auto" onclick="showSection('order'); setActiveLink(document.querySelector('.nav-link[onclick*=\'order\']'));">
+                            Order Now <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+<br>
+<p class="text-xl sm:text-2xl text-sky-100 mb-8">Delivered to Your Hotel or Apartment in Minutes!</p>
+                    </div>
+                    <div class="md:w-1/2 h-72 md:h-auto hero-image-container">
+                        <img src="https://static.wixstatic.com/media/cfe6d1_84a78396f22b49dd86d14c247efae6c0~mv2.png" alt="Drinks delivered to room" class="bg-cover bg-center">
+                    </div>
+                </div>
+            </div>
+            <section class="py-16 md:py-20">
+                <h2 class="text-3xl md:text-4xl font-bold text-[var(--primary-dark-color)] mb-12 text-center">Why Choose HotelDrinks?</h2>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="why-us-card transform hover:scale-105 transition-transform duration-300"><i class="fas fa-tags"></i><h3 class="text-xl font-semibold text-slate-700 mb-2">Smarter Prices</h3><p class="text-slate-600">Hotel Mini-Bar: ~₦2,000. Our Price: ~₦1,000. Enjoy significant savings!</p></div>
+                    <div class="why-us-card transform hover:scale-105 transition-transform duration-300"><i class="fas fa-bolt-lightning"></i><h3 class="text-xl font-semibold text-slate-700 mb-2">Lightning Fast</h3><p class="text-slate-600">Delivery in <span class="font-bold">around 5 minutes</span> to nearby locations. We're swift!</p></div>
+                    <div class="why-us-card transform hover:scale-105 transition-transform duration-300"><i class="fas fa-map-pin"></i><h3 class="text-xl font-semibold text-slate-700 mb-2">Ultimate Convenience</h3><p class="text-slate-600">Order from anywhere, to your hotel or apartment. We deliver nationwide.</p></div>
+                </div>
+            </section>
+        </section>
+
+        <section id="order" class="page-section hidden">
+            <div class="card p-6 md:p-8">
+                <h2 class="text-3xl font-bold text-[var(--primary-dark-color)] mb-8 text-center">Place Your Order</h2>
+                
+                <div id="location-selection-step" class="order-step mb-8 p-6 bg-slate-50 rounded-lg border border-slate-200">
+                    <h3 class="text-xl font-semibold text-slate-700 mb-4">Step 1: Where are you?</h3>
+                    <div class="location-type-toggle flex mb-4">
+                        <button id="select-hotel-type-btn" class="flex-1 active" onclick="toggleLocationType('hotel')"><i class="fas fa-hotel mr-2"></i>Hotel</button>
+                        <button id="select-apartment-type-btn" class="flex-1" onclick="toggleLocationType('apartment')"><i class="fas fa-building mr-2"></i>Apartment/Address</button>
+                    </div>
+
+                    <div id="hotel-selection-content">
+                        <p class="text-sm text-slate-500 mb-4">Find your hotel on the map or list. We can also try to auto-detect your location.</p>
+                        <div id="hotel-list" class="space-y-2 max-h-48 overflow-y-auto mb-4"></div>
+                        <p id="selected-hotel-info" class="text-slate-700 font-medium mb-4">Selected Hotel: <span class="text-sky-600">None</span></p>
+                    </div>
+
+                    <div id="apartment-address-content" class="hidden">
+                        <p class="text-sm text-slate-500 mb-4">Enter your delivery address. We'll try to auto-fill State/City if location access is granted.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div class="form-group">
+                                <label for="apartment-state">State</label>
+                                <select id="apartment-state" class="select-field"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="apartment-city">City/Town</label>
+                                <select id="apartment-city" class="select-field" disabled></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="apartment-street-address">Street Address & Apartment No.</label>
+                            <input type="text" id="apartment-street-address" class="input-field" placeholder="e.g., 123 Main St, Apt 4B">
+                        </div>
+                         <p id="entered-address-info" class="text-slate-700 font-medium mb-4 hidden">Address: <span class="text-sky-600"></span></p>
+                    </div>
+                    <div id="map-container-common" class="mt-4"> <div id="map"></div>
+                    </div>
+                    <button id="proceed-to-products-btn" type="button" onclick="proceedToProducts()" class="w-full btn btn-primary font-semibold py-2.5 mt-6" disabled>Next: Browse Drinks</button>
+                </div>
+                
+                <div id="product-browsing-step" class="order-step hidden mb-8">
+                    <h3 class="text-xl font-semibold text-slate-700 mb-1">Step 2: Browse Drinks</h3>
+                    <div class="my-4 relative">
+                        <input type="search" id="drink-search-input" class="input-field w-full" placeholder="Search for drinks...">
+                        <div class="search-icon-wrapper"><i class="fas fa-search"></i></div>
+                    </div>
+                    <p class="text-slate-500 mb-4">Select your desired beverages from the categories below.</p>
+                    <div class="flex space-x-2 mb-6 overflow-x-auto pb-2">
+                        <button class="category-btn active bg-sky-500 text-white px-4 py-2 rounded-full text-sm font-medium" onclick="filterProducts('all', this)">All</button>
+                        <button class="category-btn bg-slate-200 text-slate-700 hover:bg-sky-100 px-4 py-2 rounded-full text-sm font-medium" onclick="filterProducts('water', this)">Water</button>
+                        <button class="category-btn bg-slate-200 text-slate-700 hover:bg-sky-100 px-4 py-2 rounded-full text-sm font-medium" onclick="filterProducts('softdrinks', this)">Soft Drinks</button>
+                        <button class="category-btn bg-slate-200 text-slate-700 hover:bg-sky-100 px-4 py-2 rounded-full text-sm font-medium" onclick="filterProducts('alcoholic', this)">Beer & Wine</button>
+                        <button class="category-btn bg-slate-200 text-slate-700 hover:bg-sky-100 px-4 py-2 rounded-full text-sm font-medium" onclick="filterProducts('spirits', this)">Spirits</button>
+                        <button class="category-btn bg-slate-200 text-slate-700 hover:bg-sky-100 px-4 py-2 rounded-full text-sm font-medium" onclick="filterProducts('mixers', this)">Mixers</button>
+                    </div>
+                    <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+                    <button onclick="proceedToCartReview()" class="w-full btn btn-primary font-semibold py-3 mt-8 text-lg">Review Cart & Checkout</button>
+                </div>
+
+                <div id="cart-review-step" class="order-step hidden mb-8">
+                    <h3 class="text-xl font-semibold text-slate-700 mb-6">Step 3: Review Your Cart & Confirm Details</h3>
+                    <div id="cart-items-review" class="space-y-4 mb-6">
+                        <p id="empty-cart-message-review" class="text-slate-500">Your cart is currently empty.</p>
+                    </div>
+                    <div class="bg-slate-50 p-6 rounded-lg mb-6">
+                        <div class="flex justify-between items-center mb-2"><span class="text-slate-600">Subtotal:</span><span id="cart-subtotal-review" class="font-semibold text-slate-800">₦0</span></div>
+                        <div class="flex justify-between items-center mb-2"><span class="text-slate-600">Delivery Fee:</span><span id="delivery-fee-review" class="font-semibold text-slate-800">₦0</span></div>
+                        <div class="flex justify-between items-center mb-4 text-lg font-bold text-[var(--primary-dark-color)]"><span>Total:</span><span id="cart-total-review">₦0</span></div>
+                    </div>
+                    
+                    <div id="guest-details-checkout" class="p-6 bg-slate-50 rounded-lg border border-slate-200">
+                        <h4 class="text-lg font-semibold text-slate-700 mb-4">Guest Details for Delivery</h4>
+                        <form id="guest-checkout-form" class="space-y-5">
+                            <div class="form-group"><label for="checkout-room-number">Room Number / Apt No.</label><input type="text" id="checkout-room-number" name="room-number" required class="input-field" placeholder="e.g., 305 or Apt 4B"></div>
+                            <div class="form-group"><label for="checkout-guest-name">Your Name</label><input type="text" id="checkout-guest-name" name="guest-name" required class="input-field" placeholder="Full Name"></div>
+                            <div class="form-group">
+                                <label for="checkout-phone-number">Phone Number</label>
+                                <input type="tel" id="checkout-phone-number" name="phone-number" class="input-field" placeholder="08012345678" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                            </div>
+                        </form>
+                    </div>
+                     <div class="mt-6 form-group">
+                        <label for="payment-method">Payment Method</label>
+                        <select id="payment-method" name="payment-method" class="select-field">
+                            <option>Credit/Debit Card (Online - Mock)</option>
+                            <option>Mobile Wallet (Online - Mock)</option>
+                            <option selected>Cash on Delivery</option>
+                        </select>
+                    </div>
+                    <button onclick="confirmAndPlaceOrder()" class="w-full btn btn-primary font-semibold py-3 mt-8 text-lg">Confirm & Place Order</button>
+                </div>
+
+                <div id="order-confirmation-step" class="order-step hidden text-center py-10">
+                    <i class="fas fa-check-circle text-7xl text-green-500 mb-6"></i>
+                    <h3 class="text-3xl font-bold text-[var(--primary-dark-color)] mb-3">Order Confirmed!</h3>
+                    <p class="text-slate-600 text-lg mb-2">Your order for <strong id="confirmed-location-name" class="text-sky-700">Your Location</strong>, <strong id="confirmed-order-id" class="text-sky-700">#HOD12345</strong> has been placed.</p>
+                    <p class="text-slate-600 text-lg mb-6">Estimated delivery: <strong id="confirmed-delivery-time" class="text-sky-700">~5 minutes</strong>.</p>
+                    <p class="text-slate-500 text-base mb-8">You will receive SMS updates (mock).</p>
+                    <div class="space-y-3 sm:space-y-0 sm:space-x-3">
+                        <button class="btn btn-primary py-2.5 px-8" onclick="proceedToRating()">Rate Your Service</button>
+                        <button class="btn btn-secondary py-2.5 px-8" onclick="resetToHome()">Back to Home</button>
+                    </div>
+                </div>
+
+                <div id="rating-review-step" class="order-step hidden py-10">
+                     <h3 class="text-3xl font-bold text-[var(--primary-dark-color)] mb-8 text-center">Rate Your Experience</h3>
+                    <div class="max-w-md mx-auto card p-8">
+                        <p class="text-slate-600 mb-6 text-center text-lg">Order <strong id="rating-order-id" class="text-sky-700">#HOD12345</strong>. How was our service?</p>
+                        <div class="star-rating flex justify-center space-x-1 mb-8">
+                            <i class="fas fa-star" data-value="1"></i><i class="fas fa-star" data-value="2"></i><i class="fas fa-star" data-value="3"></i><i class="fas fa-star" data-value="4"></i><i class="fas fa-star" data-value="5"></i>
+                        </div>
+                        <input type="hidden" id="selected-rating" value="0">
+                        <div class="form-group">
+                            <label for="review-text">Leave a review (optional):</label>
+                            <textarea id="review-text" rows="4" class="input-field" placeholder="Tell us more... e.g., Super fast delivery! Drinks were perfectly chilled."></textarea>
+                        </div>
+                        <button onclick="submitRatingReview()" class="w-full btn btn-primary font-semibold py-2.5 mt-6">Submit Feedback</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="login" class="page-section hidden">
+            <div class="max-w-md mx-auto mt-12 card p-8 md:p-10">
+                <h2 class="text-3xl font-bold text-[var(--primary-dark-color)] mb-8 text-center">Welcome Back!</h2>
+                <form id="login-form" class="space-y-6">
+                    <div class="form-group"><label for="login-email">Email</label><input type="email" id="login-email" required class="input-field" placeholder="you@example.com"></div>
+                    <div class="form-group"><label for="login-password">Password</label><input type="password" id="login-password" required class="input-field" placeholder="••••••••"></div>
+                    <button type="button" onclick="handleLogin()" class="w-full btn btn-primary font-semibold py-3">Login</button>
+                </form>
+                <p class="mt-8 text-center text-sm text-slate-600">Don't have an account? <a href="#" class="font-medium text-sky-600 hover:text-sky-500" onclick="showSection('register'); setActiveLink(document.querySelector('.nav-link[onclick*=\'register\']'));">Sign up</a></p>
+            </div>
+        </section>
+
+        <section id="register" class="page-section hidden">
+           <div class="max-w-md mx-auto mt-12 card p-8 md:p-10">
+                <h2 class="text-3xl font-bold text-[var(--primary-dark-color)] mb-8 text-center">Create Your Account</h2>
+                <form id="register-form" class="space-y-6">
+                    <div class="form-group"><label for="register-name">Full Name</label><input type="text" id="register-name" required class="input-field" placeholder="Your Full Name"></div>
+                    <div class="form-group"><label for="register-email">Email</label><input type="email" id="register-email" required class="input-field" placeholder="you@example.com"></div>
+                    <div class="form-group">
+                        <label for="register-phone">Phone (Optional)</label>
+                        <input type="tel" id="register-phone" class="input-field" placeholder="08012345678" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                    </div>
+                    <div class="form-group"><label for="register-password">Password</label><input type="password" id="register-password" required class="input-field" placeholder="Choose a strong password"></div>
+                    <button type="button" onclick="handleRegistration()" class="w-full btn btn-primary font-semibold py-3">Create Account</button>
+                </form>
+                <p class="mt-8 text-center text-sm text-slate-600">Already have an account? <a href="#" class="font-medium text-sky-600 hover:text-sky-500" onclick="showSection('login'); setActiveLink(document.querySelector('.nav-link[onclick*=\'login\']'));">Login</a></p>
+            </div>
+        </section>
+
+        <section id="vendor-signup" class="page-section hidden card p-6 md:p-8">
+            <h2 class="text-3xl font-bold text-[var(--primary-dark-color)] mb-8 text-center">Become a Vendor Partner</h2>
+            <div class="max-w-xl mx-auto">
+                <p class="text-slate-600 mb-8 text-center leading-relaxed">Partner with HotelDrinks to expand your reach! Supply drinks to hotels and apartments in your area. We provide the platform, you manage stock and local delivery. Let's grow together, nationwide!</p>
+                <form id="vendor-signup-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group"><label for="vendor-name">Business Name</label><input type="text" id="vendor-name" required class="input-field"></div>
+                        <div class="form-group"><label for="vendor-contact-person">Contact Person</label><input type="text" id="vendor-contact-person" required class="input-field"></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group"><label for="vendor-email">Business Email</label><input type="email" id="vendor-email" required class="input-field"></div>
+                        <div class="form-group">
+                            <label for="vendor-phone">Business Phone</label>
+                            <input type="tel" id="vendor-phone" required class="input-field" placeholder="08012345678" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                        </div>
+                    </div>
+                    <div class="form-group"><label for="vendor-address">Business Address / Primary Area of Operation</label><textarea id="vendor-address" rows="3" class="input-field" placeholder="e.g., Wuse Zone 2, Abuja OR Ikeja GRA, Lagos"></textarea></div>
+                    <p class="text-sm text-slate-500">Submitting this form expresses your interest. Our team will contact you with more details.</p>
+                    <button type="button" onclick="handleVendorSignup()" class="w-full btn btn-primary font-semibold py-3">Submit Interest</button>
+                </form>
+            </div>
+        </section>
+        
+        <section id="how-it-works" class="page-section hidden card p-6 md:p-8">
+            <h2 class="text-3xl font-bold text-[var(--primary-dark-color)] mb-10 text-center">Simple Steps to Refreshment</h2>
+            <div class="grid md:grid-cols-5 gap-x-6 gap-y-8 text-center">
+                 <div class="flex flex-col items-center p-3"><div class="bg-sky-100 text-sky-600 rounded-full w-20 h-20 flex items-center justify-center mb-4 text-3xl shadow-md"><i class="fas fa-user-check"></i></div><h3 class="text-lg font-semibold text-slate-700 mb-1">1. Login/Sign Up</h3><p class="text-sm text-slate-600">(Optional) For saved details & faster orders.</p></div>
+                 <div class="flex flex-col items-center p-3"><div class="bg-sky-100 text-sky-600 rounded-full w-20 h-20 flex items-center justify-center mb-4 text-3xl shadow-md"><i class="fas fa-map-location-dot"></i></div><h3 class="text-lg font-semibold text-slate-700 mb-1">2. Set Location</h3><p class="text-sm text-slate-600">Select hotel or enter your apartment address.</p></div>
+                 <div class="flex flex-col items-center p-3"><div class="bg-sky-100 text-sky-600 rounded-full w-20 h-20 flex items-center justify-center mb-4 text-3xl shadow-md"><i class="fas fa-martini-glass"></i></div><h3 class="text-lg font-semibold text-slate-700 mb-1">3. Pick Drinks</h3><p class="text-sm text-slate-600">Browse our wide selection & add to cart.</p></div>
+                 <div class="flex flex-col items-center p-3"><div class="bg-sky-100 text-sky-600 rounded-full w-20 h-20 flex items-center justify-center mb-4 text-3xl shadow-md"><i class="fas fa-credit-card"></i></div><h3 class="text-lg font-semibold text-slate-700 mb-1">4. Checkout</h3><p class="text-sm text-slate-600">Confirm details, room/apt no. & pay.</p></div>
+                 <div class="flex flex-col items-center p-3"><div class="bg-sky-100 text-sky-600 rounded-full w-20 h-20 flex items-center justify-center mb-4 text-3xl shadow-md"><i class="fas fa-rocket"></i></div><h3 class="text-lg font-semibold text-slate-700 mb-1">5. Speedy Delivery</h3><p class="text-sm text-slate-600">Drinks at your door in ~5 mins!</p></div>
+            </div>
+        </section>
+
+        <section id="contact" class="page-section hidden card p-6 md:p-8">
+            <h2 class="text-3xl font-bold text-[var(--primary-dark-color)] mb-8 text-center">Get In Touch</h2>
+            <div class="max-w-lg mx-auto">
+                <p class="text-slate-600 mb-8 text-center">Questions, feedback, or complaints? We're here to help!</p>
+                <form id="contact-form" class="space-y-6">
+                    <div class="form-group">
+                        <label for="contact-inquiry-type">Nature of Inquiry</label>
+                        <select id="contact-inquiry-type" name="inquiry-type" class="select-field">
+                            <option value="general">General Question</option>
+                            <option value="feedback">Feedback</option>
+                            <option value="complaint">Complaint</option>
+                            <option value="support">Order Support</option>
+                            <option value="vendor">Vendor Inquiry</option>
+                        </select>
+                    </div>
+                     <div id="contact-order-id-group" class="hidden form-group">
+                        <label for="contact-order-id">Order ID (if applicable)</label>
+                        <input type="text" name="contact-order-id" id="contact-order-id" class="input-field" placeholder="e.g., HOD12345">
+                    </div>
+                    <div class="form-group"><label for="contact-name">Full Name</label><input type="text" name="contact-name" id="contact-name" required class="input-field"></div>
+                    <div class="form-group"><label for="contact-email">Email Address</label><input type="email" name="contact-email" id="contact-email" required class="input-field"></div>
+                    <div class="form-group"><label for="contact-message">Message</label><textarea id="contact-message" name="contact-message" rows="4" required class="input-field"></textarea></div>
+                    <div><button type="button" onclick="handleContactSubmit()" class="w-full btn btn-primary font-semibold py-3">Send Message</button></div>
+                </form>
+            </div>
+        </section>
+
+        <section id="faq" class="page-section hidden card p-6 md:p-8">
+            <h2 class="text-3xl font-bold text-[var(--primary-dark-color)] mb-10 text-center">Frequently Asked Questions</h2>
+            <div class="space-y-8 max-w-2xl mx-auto">
+                <div><h3 class="font-semibold text-slate-800 text-lg mb-1">Do I need an account to order?</h3><p class="text-slate-600 leading-relaxed">No, you can checkout as a guest. Creating an account is quick and allows for faster checkouts in the future by saving your details (mocked for this demo).</p></div>
+                <div><h3 class="font-semibold text-slate-800 text-lg mb-1">What locations do you serve?</h3><p class="text-slate-600 leading-relaxed">We are a nationwide service! Our platform connects you with local vendors near your hotel or apartment across the country. Delivery times and availability may vary based on local vendor coverage.</p></div>
+                <div><h3 class="font-semibold text-slate-800 text-lg mb-1">How does delivery to apartments work?</h3><p class="text-slate-600 leading-relaxed">Simply select "Apartment/Address" during the order process and enter your full address (State, City, Street). We'll match you with the nearest available vendor. Ensure your address details are accurate for smooth delivery.</p></div>
+                <div><h3 class="font-semibold text-slate-800 text-lg mb-1">How fast is delivery?</h3><p class="text-slate-600 leading-relaxed">For nearby locations with active vendors, we aim for delivery in approximately 5 minutes! This can vary based on demand and distance.</p></div>
+                <div><h3 class="font-semibold text-slate-800 text-lg mb-1">How does the vendor system work?</h3><p class="text-slate-600 leading-relaxed">Local businesses can partner with us as vendors. They list their drink products and manage inventory for their service area. When you place an order, our system (conceptually) routes it to the closest vendor who can fulfill it quickly.</p></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-10 mt-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; <span id="currentYear"></span> HotelDrinks On Demand. All rights reserved.</p>
+            <p class="text-sm mt-1">Fast, Affordable Drinks Delivered Nationwide.</p>
+            <div class="mt-4 space-x-4">
+                <a href="#" class="hover:text-sky-400 transition-colors">Privacy Policy</a>
+                <a href="#" class="hover:text-sky-400 transition-colors">Terms of Service</a>
+                 <a href="#" class="hover:text-sky-400 transition-colors" onclick="showSection('contact')">Support</a>
+            </div>
+        </div>
+    </footer>
+
+    <div id="chat-widget" class="fixed bottom-6 right-6 bg-sky-500 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-xl cursor-pointer hover:bg-sky-600 transition-all duration-300 transform hover:scale-110"> <i class="fas fa-comment-dots text-2xl"></i></div>
+    <div id="messageModal" class="modal"><div class="modal-content"><span class="modal-close" onclick="closeModal()">&times;</span><p id="modalMessageText" class="text-slate-700 text-lg"></p><button class="btn btn-primary mt-6 py-2 px-6" onclick="closeModal()">OK</button></div></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        // --- Global State & Config ---
+        let currentLoggedInUser = null; 
+        let currentOrderDetails = { orderId: null, locationName: null };
+        let currentDeliveryFee = 0; // NGN
+        let selectedLocationType = 'hotel'; 
+        const MOCK_VENDOR_LOCATION = { lat: 6.5871, lon: 3.3705 }; // Example: Ikeja, Lagos for distance calc
+        const DELIVERY_FEE_PER_KM = 200; // NGN
+
+        const initialProductStocks = {}; 
+        
+        // --- DOM Elements ---
+        const sections = Array.from(document.querySelectorAll('.page-section'));
+        const navLinks = Array.from(document.querySelectorAll('header .nav-link'));
+        const mobileNavLinks = Array.from(document.querySelectorAll('#mobile-menu a.block'));
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const productListContainer = document.getElementById('product-list');
+        const categoryBtns = Array.from(document.querySelectorAll('.category-btn'));
+        const drinkSearchInput = document.getElementById('drink-search-input');
+        const modal = document.getElementById('messageModal');
+        const modalMessageText = document.getElementById('modalMessageText');
+
+        const orderSteps = {
+            locationSelection: document.getElementById('location-selection-step'),
+            productBrowsing: document.getElementById('product-browsing-step'),
+            cartReview: document.getElementById('cart-review-step'),
+            orderConfirmation: document.getElementById('order-confirmation-step'),
+            ratingReview: document.getElementById('rating-review-step')
+        };
+        
+        const hotelSelectionContent = document.getElementById('hotel-selection-content');
+        const apartmentAddressContent = document.getElementById('apartment-address-content');
+        const apartmentStateSelect = document.getElementById('apartment-state');
+        const apartmentCitySelect = document.getElementById('apartment-city');
+        const apartmentStreetInput = document.getElementById('apartment-street-address');
+        const enteredAddressInfo = document.getElementById('entered-address-info');
+        const proceedToProductsBtn = document.getElementById('proceed-to-products-btn');
+        const mapContainerCommon = document.getElementById('map-container-common'); // Map container
+
+        // --- Sample Data ---
+        const nigeriaGeoData = {
+            "Abia": { lat: 5.53, lon: 7.5, zoom: 9, cities: ["Umuahia", "Aba"] },
+            "Adamawa": { lat: 9.33, lon: 12.5, zoom: 8, cities: ["Yola", "Mubi"] },
+            "Akwa Ibom": { lat: 5.0, lon: 7.83, zoom: 9, cities: ["Uyo", "Eket"] },
+            "Anambra": { lat: 6.23, lon: 7.0, zoom: 9, cities: ["Awka", "Onitsha", "Nnewi"] },
+            "Bauchi": { lat: 10.5, lon: 10.0, zoom: 8, cities: ["Bauchi", "Azare"] },
+            "Bayelsa": { lat: 4.75, lon: 6.16, zoom: 9, cities: ["Yenagoa"] },
+            "Benue": { lat: 7.33, lon: 8.75, zoom: 8, cities: ["Makurdi", "Gboko"] },
+            "Borno": { lat: 11.5, lon: 13.0, zoom: 7, cities: ["Maiduguri", "Biu"] },
+            "Cross River": { lat: 5.83, lon: 8.5, zoom: 8, cities: ["Calabar", "Ikom"] },
+            "Delta": { lat: 5.5, lon: 6.0, zoom: 9, cities: ["Asaba", "Warri", "Sapele"] },
+            "Ebonyi": { lat: 6.25, lon: 8.0, zoom: 9, cities: ["Abakaliki"] },
+            "Edo": { lat: 6.5, lon: 6.0, zoom: 9, cities: ["Benin City", "Auchi"] },
+            "Ekiti": { lat: 7.75, lon: 5.33, zoom: 9, cities: ["Ado-Ekiti", "Ikere-Ekiti"] },
+            "Enugu": { lat: 6.5, lon: 7.5, zoom: 9, cities: ["Enugu", "Nsukka"] },
+            "FCT": { lat: 9.07, lon: 7.49, zoom: 10, cities: ["Abuja", "Gwagwalada", "Kuje"] },
+            "Gombe": { lat: 10.25, lon: 11.17, zoom: 8, cities: ["Gombe"] },
+            "Imo": { lat: 5.5, lon: 7.0, zoom: 9, cities: ["Owerri", "Orlu"] },
+            "Jigawa": { lat: 12.0, lon: 9.5, zoom: 8, cities: ["Dutse", "Hadejia"] },
+            "Kaduna": { lat: 10.5, lon: 7.75, zoom: 8, cities: ["Kaduna", "Zaria"] },
+            "Kano": { lat: 11.5, lon: 8.5, zoom: 8, cities: ["Kano"] },
+            "Katsina": { lat: 12.5, lon: 7.5, zoom: 8, cities: ["Katsina", "Funtua"] },
+            "Kebbi": { lat: 11.5, lon: 4.0, zoom: 8, cities: ["Birnin Kebbi", "Argungu"] },
+            "Kogi": { lat: 7.75, lon: 6.75, zoom: 8, cities: ["Lokoja", "Okene"] },
+            "Kwara": { lat: 8.5, lon: 5.0, zoom: 8, cities: ["Ilorin", "Offa"] },
+            "Lagos": { lat: 6.52, lon: 3.37, zoom: 10, cities: ["Ikeja", "Lagos Island", "Lekki", "Victoria Island", "Badagry", "Ikorodu", "Apapa", "Surulere"] },
+            "Nasarawa": { lat: 8.5, lon: 8.25, zoom: 8, cities: ["Lafia", "Keffi"] },
+            "Niger": { lat: 10.0, lon: 6.0, zoom: 7, cities: ["Minna", "Bida", "Suleja"] },
+            "Ogun": { lat: 7.0, lon: 3.5, zoom: 9, cities: ["Abeokuta", "Ijebu Ode", "Sango Otta"] },
+            "Ondo": { lat: 7.0, lon: 5.0, zoom: 9, cities: ["Akure", "Ondo Town", "Owo"] },
+            "Osun": { lat: 7.5, lon: 4.5, zoom: 9, cities: ["Osogbo", "Ile-Ife", "Ilesa"] },
+            "Oyo": { lat: 8.0, lon: 4.0, zoom: 8, cities: ["Ibadan", "Ogbomosho", "Oyo"] },
+            "Plateau": { lat: 9.25, lon: 9.0, zoom: 8, cities: ["Jos", "Barkin Ladi"] },
+            "Rivers": { lat: 4.75, lon: 7.0, zoom: 9, cities: ["Port Harcourt", "Bonny"] },
+            "Sokoto": { lat: 13.0, lon: 5.25, zoom: 8, cities: ["Sokoto"] },
+            "Taraba": { lat: 8.0, lon: 10.5, zoom: 7, cities: ["Jalingo", "Wukari"] },
+            "Yobe": { lat: 12.0, lon: 11.5, zoom: 8, cities: ["Damaturu", "Potiskum"] },
+            "Zamfara": { lat: 12.25, lon: 6.25, zoom: 8, cities: ["Gusau"] }
+        };
+
+        const hotels = [
+            { id: 1, name: "Transcorp Hilton Abuja", address: "1 Aguiyi Ironsi St, Maitama, Abuja", lat: 9.0648, lon: 7.4891, deliveryFee: 0.00, state: "FCT", city: "Abuja" },
+            { id: 2, name: "Eko Hotel Lagos", address: "Plot 1415 Adetokunbo Ademola Street, Lagos", lat: 6.4281, lon: 3.4216, deliveryFee: 0.00, state: "Lagos", city: "Victoria Island" },
+            { id: 3, name: "Nordic Hotel Abuja", address: "Blvd. 26, Alex Ekwueme Way, Jabi, Abuja", lat: 9.0510, lon: 7.4713, deliveryFee: 500.00, state: "FCT", city: "Abuja" },
+            { id: 4, name: "Radisson Blu Anchorage Hotel, Lagos", address: "1a Ozumba Mbadiwe Ave, VI, Lagos", lat: 6.4346, lon: 3.4165, deliveryFee: 0.00, state: "Lagos", city: "Victoria Island" }, // Changed fee to 0 for testing distance calc
+            { id: 5, name: "Le Méridien Ogeyi Place, Port Harcourt", address: "45 Tombia St, GRA Phase 2, Port Harcourt", lat: 4.8242, lon: 7.0321, deliveryFee: 0.00, state: "Rivers", city: "Port Harcourt"}
+        ];
+        let selectedHotel = null;
+        let enteredApartmentAddress = { state: null, city: null, street: null, lat: null, lon: null };
+        let map; 
+        let userMarker; 
+        let hotelMarkers = [];
+
+        const products = [
+            { "id": 1, "name": "Still Water (Eva)", "category": "water", "price": 500, "image": "https://i0.wp.com/shoprite.ng/wp-content/uploads/2023/06/Water-0.75L-Eva-750Ml-Bottle-114.99.jpg", "description": "Pure natural spring water (75cl).", "stock": 15 },
+    { "id": 2, "name": "Sparkling Water (Perrier)", "category": "water", "price": 1200, "image": "https://i5.walmartimages.com/seo/Perrier-Carbonated-Mineral-Water-11-15-fl-oz-Glass-Bottle-4-Pack-Allergens-Not-Contained_8d79486a-d2fe-4972-9e78-b5ea56ddee5a.54a750538b6915789025f8f7c7e18b0e.jpeg?odnHeight=640&odnWidth=640&odnBg=FFFFFF", "description": "Crisp & bubbly (330ml).", "stock": 10 },
+    { "id": 3, "name": "Coca-Cola Classic", "category": "softdrinks", "price": 1000, "image": "https://www.wholesale-supplier.uk/media/catalog/product/cache/768c9b9886b55f3557afb95da5189daf/t/u/tumbnail_007e04e4-4ae3-443f-909c-69c095cd6130_1.jpg", "description": "The original cola taste (330ml can).", "stock": 20 },
+    { "id": 4, "name": "Fanta Orange", "category": "softdrinks", "price": 1000, "image": "https://cdn.bmstores.co.uk/images/hpcProductImage/imgDetail1150/145845-fanta-orange-can-330ml.jpg", "description": "Tangy orange soda (330ml can).", "stock": 0 },
+    { "id": 5, "name": "Schweppes Lemonade", "category": "softdrinks", "price": 900, "image": "https://maxmartonline.com/images/thumbs/0015810_schweppes-lemonade-can-330ml.jpeg", "description": "Sweet & sour lemonade (330ml can).", "stock": 12 },
+    { "id": 6, "name": "Heineken Lager Beer", "category": "alcoholic", "price": 1500, "image": "https://myliquorhub.com/wp-content/uploads/2022/10/Heineken-Lager-Beer-Can-.jpg", "description": "Premium Lager Beer (330ml can).", "stock": 10 },
+    { "id": 7, "name": "Red Wine (Carlo Rossi Mini)", "category": "alcoholic", "price": 3000, "image": "https://img.lazcdn.com/g/p/23d9dfff3f0ef4192bc3d200238e36d4.jpg_720x720q80.jpg_.webp", "description": "Smooth mini red wine (187ml).", "stock": 5 },
+    { "id": 8, "name": "Gordon's Gin & Tonic", "category": "alcoholic", "price": 2500, "image": "https://www.bestwaywholesale.co.uk/img/products/1000/6/5000289927376.jpg", "description": "Classic G&T (250ml can).", "stock": 8 },
+    { "id": 9, "name": "Johnnie Walker Black Label", "category": "spirits", "price": 15000, "image": "https://clubmalt.com/wp-content/uploads/2023/03/Johnnie-Walker-Black-Label-Anniversary-Edition.jpg", "description": "Blended Scotch Whisky (75cl).", "stock": 3 },
+    { "id": 10, "name": "Jameson Irish Whiskey", "category": "spirits", "price": 12000, "image": "https://cellarcentral.ng/wp-content/uploads/2017/02/Jameson-WhiskY.webp", "description": "Smooth Irish Whiskey (70cl).", "stock": 4 },
+    { "id": 11, "name": "Captain Morgan Spiced Rum", "category": "spirits", "price": 8000, "image": "https://www.vipbottles.co.uk/wp-content/uploads/2020/11/Captain-Morgan-100-Proof-Spiced-Rum-75cl.png", "description": "Caribbean Spiced Rum (75cl).", "stock": 6 },
+    { "id": 12, "name": "Bacardi Carta Blanca", "category": "spirits", "price": 7500, "image": "https://naijaliquor.com/wp-content/uploads/2023/03/Bacardi-Superior-Carta-Blanca-Rum.png", "description": "Classic White Rum (75cl).", "stock": 7 },
+    { "id": 13, "name": "Schweppes Ginger Ale", "category": "mixers", "price": 800, "image": "https://www.kavakonstantakopoulos.gr/images/thumbs/0001236_500.jpg", "description": "Perfect for mixing (330ml can).", "stock": 15 },
+    { "id": 14, "name": "Tonic Water (Generic)", "category": "mixers", "price": 700, "image": "https://nordicexpatshop.com/media/catalog/product/cache/7d10f99bd9e850d2940843c910c1bfd9/h/a/harboe_indian_tonic.jpg", "description": "Crisp tonic water (330ml can).", "stock": 18 },
+
+        ];
+        products.forEach(p => initialProductStocks[p.id] = p.stock);
+        let cart = [];
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+            showSection('home');
+            setActiveLink(navLinks.find(link => link.getAttribute('onclick').includes('home')));
+            updateUserUI();
+            setupEventListeners();
+            populateStatesDropdown();
+        });
+
+        function setupEventListeners() {
+            mobileMenuButton.addEventListener('click', toggleMobileMenu);
+            // Simplified nav link event listeners
+            document.querySelectorAll('header .nav-link, #mobile-menu a.block').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault(); // Prevent default anchor behavior if any
+                    const isMobile = link.closest('#mobile-menu') !== null;
+                    const sectionMatch = link.getAttribute('onclick').match(/showSection\('([^']+)'\)/);
+                    if (sectionMatch && sectionMatch[1]) {
+                        const sectionId = sectionMatch[1];
+                        setActiveLink(link, isMobile);
+                        showSection(sectionId);
+                        if (isMobile) toggleMobileMenu();
+                    } else if (link.getAttribute('onclick').includes('logoutUser')) {
+                        logoutUser();
+                        if (isMobile) toggleMobileMenu();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.star-rating .fa-star').forEach(star => {
+                star.addEventListener('click', () => setRating(star.dataset.value));
+                star.addEventListener('mouseover', () => highlightStars(star.dataset.value));
+                star.addEventListener('mouseout', () => highlightStars(document.getElementById('selected-rating').value));
+            });
+
+            const inquiryTypeSelect = document.getElementById('contact-inquiry-type');
+            if(inquiryTypeSelect) {
+                inquiryTypeSelect.addEventListener('change', (e) => {
+                    document.getElementById('contact-order-id-group').classList.toggle('hidden', !(e.target.value === 'complaint' || e.target.value === 'support'));
+                });
+            }
+            const chatWidget = document.getElementById('chat-widget');
+            if(chatWidget) {
+                chatWidget.addEventListener('click', () => showModalMessage("Live chat support is currently unavailable."));
+            }
+            
+            apartmentStateSelect.addEventListener('change', handleStateChange);
+            apartmentCitySelect.addEventListener('change', handleCityChange);
+            apartmentStreetInput.addEventListener('input', () => {
+                enteredApartmentAddress.street = apartmentStreetInput.value.trim();
+                validateLocationSelection();
+            });
+            if(drinkSearchInput) {
+                drinkSearchInput.addEventListener('input', () => {
+                    renderProducts(categoryBtns.find(b => b.classList.contains('active'))?.getAttribute('onclick').match(/'([^']+)'/)[1] || 'all');
+                });
+            }
+        }
+
+        // --- Navigation & UI ---
+        function showSection(sectionId, skipOrderReset = false) {
+            sections.forEach(section => section.classList.toggle('hidden', section.id !== sectionId));
+            window.scrollTo(0, 0);
+            if (sectionId === 'order' && !skipOrderReset) initializeOrderFlow();
+            if (sectionId !== 'order' || !skipOrderReset) Object.values(orderSteps).forEach(step => step.classList.add('hidden'));
+            if (sectionId === 'order' && orderSteps.locationSelection) orderSteps.locationSelection.classList.remove('hidden');
+        }
+
+        function setActiveLink(activeLink, isMobile = false) {
+            if (!activeLink || !activeLink.getAttribute('onclick')) return; // Guard clause
+            const allNavLinks = [...navLinks, ...mobileNavLinks];
+            allNavLinks.forEach(link => link.classList.remove('active'));
+            
+            const targetSectionMatch = activeLink.getAttribute('onclick').match(/showSection\('([^']+)'\)/);
+            if (!targetSectionMatch) { // For non-section links like Login/Signup/Logout
+                 if (activeLink.classList.contains('nav-link') || activeLink.parentElement.id.includes('auth-links') || activeLink.parentElement.id.includes('user-actions')) {
+                    activeLink.classList.add('active'); // Highlight the specific auth link
+                 }
+                 return;
+            }
+            const targetSection = targetSectionMatch[1];
+
+            navLinks.forEach(link => {
+                if (link.getAttribute('onclick')?.includes(`showSection('${targetSection}')`)) {
+                    link.classList.add('active');
+                }
+            });
+            mobileNavLinks.forEach(link => {
+                 if (link.getAttribute('onclick')?.includes(`showSection('${targetSection}')`)) {
+                    link.classList.add('active');
+                }
+            });
+             // If the originally clicked link was one of the main section links, ensure it's active
+            if (navLinks.includes(activeLink) || mobileNavLinks.includes(activeLink)) {
+                activeLink.classList.add('active');
+            }
+        }
+        function toggleMobileMenu() { mobileMenu.classList.toggle('hidden'); }
+
+        function updateUserUI() { 
+            const ids = ['auth-links-desktop', 'user-actions-desktop', 'welcome-user-desktop', 'auth-links-mobile', 'user-actions-mobile', 'welcome-user-mobile'];
+            const [authDesk, userDesk, welcomeDesk, authMob, userMob, welcomeMob] = ids.map(id => document.getElementById(id));
+
+            if (currentLoggedInUser) {
+                authDesk.classList.add('hidden'); userDesk.classList.remove('hidden');
+                welcomeDesk.textContent = `Hi, ${currentLoggedInUser.name.split(' ')[0]}!`;
+                authMob.classList.add('hidden'); userMob.classList.remove('hidden');
+                welcomeMob.textContent = `Hi, ${currentLoggedInUser.name.split(' ')[0]}!`;
+            } else {
+                authDesk.classList.remove('hidden'); userDesk.classList.add('hidden');
+                authMob.classList.remove('hidden'); userMob.classList.add('hidden');
+            }
+        }
+
+        // --- Auth (Mock) ---
+        function handleLogin() { 
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            if (!email || !password) { showModalMessage("Please enter email and password.", "error"); return; }
+            currentLoggedInUser = { name: "Demo User", email: email, phone: "08012345678" }; // Mocked phone
+            showModalMessage(`Welcome back, ${currentLoggedInUser.name}!`, "success");
+            updateUserUI(); showSection('home'); setActiveLink(navLinks.find(link => link.getAttribute('onclick').includes('home')));
+        }
+        function handleRegistration() { 
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const phone = document.getElementById('register-phone').value;
+            const password = document.getElementById('register-password').value;
+            if (!name || !email || !password) { showModalMessage("Please fill in Name, Email, and Password.", "error"); return; }
+            currentLoggedInUser = { name, email, phone };
+            showModalMessage("Registration successful! You are now logged in.", "success");
+            updateUserUI(); showSection('home'); setActiveLink(navLinks.find(link => link.getAttribute('onclick').includes('home')));
+        }
+        function logoutUser() { 
+            currentLoggedInUser = null; showModalMessage("You have been logged out.", "info");
+            updateUserUI(); showSection('home'); setActiveLink(navLinks.find(link => link.getAttribute('onclick').includes('home')));
+        }
+        
+        // --- Vendor Signup (Mock) ---
+        function handleVendorSignup() {
+            const form = document.getElementById('vendor-signup-form');
+            if (!document.getElementById('vendor-name').value || !document.getElementById('vendor-email').value) {
+                showModalMessage("Please fill in Business Name and Email.", "error"); return;
+            }
+            showModalMessage("Thank you for your interest! Our team will contact you shortly.", "success");
+            form.reset(); showSection('home');
+        }
+
+        // --- Contact Form ---
+        function handleContactSubmit() {
+            const form = document.getElementById('contact-form');
+            if (!document.getElementById('contact-name').value || !document.getElementById('contact-email').value || !document.getElementById('contact-message').value) {
+                showModalMessage("Please fill in Name, Email, and Message.", "error"); return;
+            }
+            showModalMessage("Your message has been sent! We'll get back to you soon.", "success");
+            form.reset(); document.getElementById('contact-order-id-group').classList.add('hidden');
+            showSection('home');
+        }
+
+        // --- Order Flow Logic ---
+        function toggleLocationType(type) {
+            selectedLocationType = type;
+            document.getElementById('select-hotel-type-btn').classList.toggle('active', type === 'hotel');
+            document.getElementById('select-apartment-type-btn').classList.toggle('active', type === 'apartment');
+            hotelSelectionContent.classList.toggle('hidden', type !== 'hotel');
+            apartmentAddressContent.classList.toggle('hidden', type !== 'apartment');
+            mapContainerCommon.classList.remove('hidden'); // Ensure map container is always visible in this step
+            
+            selectedHotel = null;
+            enteredApartmentAddress = { state: null, city: null, street: null, lat: null, lon: null };
+            apartmentStreetInput.value = '';
+            document.getElementById('selected-hotel-info').innerHTML = 'Selected Hotel: <span class="text-sky-600">None</span>';
+            enteredAddressInfo.classList.add('hidden');
+            currentDeliveryFee = (type === 'apartment') ? 0 : 0; // Will be calculated or set by hotel
+            
+            if (map) map.invalidateSize(); // Crucial after showing/hiding parent elements
+
+            if (type === 'apartment') {
+                 getUserLocationOrSetDefault(true); 
+            } else if (type === 'hotel') {
+                 getUserLocationOrSetDefault(); 
+            }
+            validateLocationSelection();
+        }
+
+        function validateLocationSelection() {
+            let isValid = false;
+            if (selectedLocationType === 'hotel' && selectedHotel) {
+                isValid = true;
+                currentDeliveryFee = selectedHotel.deliveryFee === 0 ? 
+                                     Math.round(haversineDistance(MOCK_VENDOR_LOCATION.lat, MOCK_VENDOR_LOCATION.lon, selectedHotel.lat, selectedHotel.lon) * DELIVERY_FEE_PER_KM) 
+                                     : selectedHotel.deliveryFee;
+            } else if (selectedLocationType === 'apartment' && enteredApartmentAddress.state && enteredApartmentAddress.city && enteredApartmentAddress.street && enteredApartmentAddress.street.length > 3) {
+                isValid = true;
+                enteredAddressInfo.querySelector('span').textContent = `${enteredApartmentAddress.street}, ${enteredApartmentAddress.city}, ${enteredApartmentAddress.state}`;
+                enteredAddressInfo.classList.remove('hidden');
+                // For apartment, calculate fee based on state/city center to mock vendor
+                const cityData = nigeriaGeoData[enteredApartmentAddress.state]; // Use state as proxy for city coords for simplicity
+                if (cityData) {
+                    enteredApartmentAddress.lat = cityData.lat; // Store approx coords
+                    enteredApartmentAddress.lon = cityData.lon;
+                    currentDeliveryFee = Math.round(haversineDistance(MOCK_VENDOR_LOCATION.lat, MOCK_VENDOR_LOCATION.lon, cityData.lat, cityData.lon) * DELIVERY_FEE_PER_KM);
+                } else {
+                    currentDeliveryFee = 1000; // Default if coords not found
+                }
+            } else {
+                 enteredAddressInfo.classList.add('hidden');
+                 currentDeliveryFee = 0;
+            }
+            proceedToProductsBtn.disabled = !isValid;
+            updateCartReviewDisplay(); // Update fee in cart preview if visible
+        }
+
+        function initializeOrderFlow() {
+            Object.values(orderSteps).forEach(step => step.classList.add('hidden'));
+            orderSteps.locationSelection.classList.remove('hidden');
+            mapContainerCommon.classList.remove('hidden'); // Ensure map is visible from start of order
+            toggleLocationType('hotel'); 
+            if (!map) initMap();
+            else { map.invalidateSize(); if (userMarker) map.removeLayer(userMarker); userMarker = null; getUserLocationOrSetDefault(); }
+            populateHotelList();
+            cart = []; 
+            updateCartDisplay(); 
+        }
+
+        function proceedToProducts() {
+            orderSteps.locationSelection.classList.add('hidden');
+            orderSteps.productBrowsing.classList.remove('hidden');
+            renderProducts();
+        }
+        function proceedToCartReview() { 
+            if (cart.length === 0) { showModalMessage("Your cart is empty. Please add some items.", "info"); return; }
+            orderSteps.productBrowsing.classList.add('hidden');
+            orderSteps.cartReview.classList.remove('hidden');
+            updateCartReviewDisplay();
+            
+            if (currentLoggedInUser) {
+                document.getElementById('checkout-guest-name').value = currentLoggedInUser.name || '';
+                document.getElementById('checkout-phone-number').value = currentLoggedInUser.phone || '';
+            } else {
+                 document.getElementById('guest-checkout-form').reset();
+            }
+        }
+        function confirmAndPlaceOrder() { 
+            const roomNumber = document.getElementById('checkout-room-number').value;
+            const guestName = document.getElementById('checkout-guest-name').value;
+            if (!roomNumber.trim() || !guestName.trim()) { showModalMessage("Please enter Room/Apt Number and Your Name.", "error"); return; }
+            if (cart.length === 0) { showModalMessage("Your cart is empty.", "error"); return; }
+
+            currentOrderDetails.orderId = "HOD" + Math.floor(Math.random() * 90000) + 10000;
+            if (selectedLocationType === 'hotel' && selectedHotel) {
+                currentOrderDetails.locationName = selectedHotel.name;
+            } else if (selectedLocationType === 'apartment' && enteredApartmentAddress.street) {
+                currentOrderDetails.locationName = `${enteredApartmentAddress.street.substring(0,15)}..., ${enteredApartmentAddress.city}`;
+            } else {
+                currentOrderDetails.locationName = "Your Location";
+            }
+            
+            document.getElementById('confirmed-order-id').textContent = `#${currentOrderDetails.orderId}`;
+            document.getElementById('confirmed-location-name').textContent = currentOrderDetails.locationName;
+            const deliveryTimeText = currentDeliveryFee > 700 ? "~5-10 minutes" : "~5 minutes"; // Example adjustment
+            document.getElementById('confirmed-delivery-time').textContent = deliveryTimeText;
+
+            orderSteps.cartReview.classList.add('hidden');
+            orderSteps.orderConfirmation.classList.remove('hidden');
+        }
+        function proceedToRating() { 
+            document.getElementById('rating-order-id').textContent = `#${currentOrderDetails.orderId}`;
+            orderSteps.orderConfirmation.classList.add('hidden');
+            orderSteps.ratingReview.classList.remove('hidden');
+            document.getElementById('selected-rating').value = "0";
+            document.getElementById('review-text').value = "";
+            highlightStars(0);
+        }
+        function resetToHome() { 
+            showSection('home');
+            setActiveLink(navLinks.find(link => link.getAttribute('onclick').includes('home')));
+            initializeOrderFlow();
+            products.forEach(p => { p.stock = initialProductStocks[p.id]; });
+            cart = [];
+            currentOrderDetails = { orderId: null, locationName: null };
+        }
+
+        // --- Product & Cart Logic ---
+        function renderProducts(filter = 'all', searchTerm = '') {
+            productListContainer.innerHTML = '';
+            const currentSearchTerm = (drinkSearchInput.value || '').toLowerCase().trim();
+            
+            let tempProducts = products;
+            if (filter !== 'all') {
+                tempProducts = tempProducts.filter(p => p.category === filter);
+            }
+            if (currentSearchTerm) {
+                tempProducts = tempProducts.filter(p => 
+                    p.name.toLowerCase().includes(currentSearchTerm) || 
+                    p.description.toLowerCase().includes(currentSearchTerm)
+                );
+            }
+
+            if (tempProducts.length === 0) { 
+                productListContainer.innerHTML = `<p class="text-slate-500 col-span-full text-center py-8">No products found matching your criteria.</p>`; 
+                return; 
+            }
+            tempProducts.forEach(product => {
+                const cardHTML = `
+                    <div class="product-card card flex flex-col">
+                        <img src="${product.image}" alt="${product.name}" class="product-image" onerror="this.onerror=null;this.src='https://placehold.co/400x300/e2e8f0/64748b?text=Image+Unavailable';">
+                        <div class="p-5 flex flex-col flex-grow">
+                            <h4 class="text-lg font-semibold text-slate-800 mb-1.5">${product.name}</h4>
+                            <p class="text-sm text-slate-500 mb-3 flex-grow">${product.description}</p>
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-2xl font-bold text-sky-600">₦${product.price.toLocaleString()}</span>
+                                ${product.stock > 0 ? `<span class="text-xs font-medium ${product.stock < 5 ? 'text-amber-600 bg-amber-100' : 'text-green-600 bg-green-100'} px-2.5 py-1 rounded-full">${product.stock} left</span>` : '<span class="text-xs font-medium text-red-600 bg-red-100 px-2.5 py-1 rounded-full">Out of Stock</span>'}
+                            </div>
+                            <button class="w-full btn ${product.stock > 0 ? 'btn-primary' : 'btn-primary'} text-sm py-2.5" ${product.stock > 0 ? `onclick="addToCart(${product.id})"` : 'disabled'}>
+                                ${product.stock > 0 ? '<i class="fas fa-cart-plus mr-1.5"></i>Add to Cart' : 'Unavailable'}
+                            </button>
+                        </div>
+                    </div>`;
+                productListContainer.innerHTML += cardHTML;
+            });
+        }
+        function filterProducts(category, btnElement) { 
+            renderProducts(category, drinkSearchInput.value); // Pass current search term
+            categoryBtns.forEach(btn => { btn.classList.remove('active', 'bg-sky-500', 'text-white'); btn.classList.add('bg-slate-200', 'text-slate-700', 'hover:bg-sky-100');});
+            btnElement.classList.add('active', 'bg-sky-500', 'text-white');
+            btnElement.classList.remove('bg-slate-200', 'text-slate-700', 'hover:bg-sky-100');
+        }
+        function addToCart(productId) { 
+            const product = products.find(p => p.id === productId);
+            if (!product || product.stock <= 0) { showModalMessage("This item is out of stock."); return; }
+            const cartItem = cart.find(item => item.id === productId);
+            if (cartItem) {
+                if (cartItem.quantity < product.stock) cartItem.quantity++;
+                else { showModalMessage("Cannot add more than available stock."); return; }
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+            product.stock--;
+            updateCartDisplay();
+            renderProducts(categoryBtns.find(b => b.classList.contains('active'))?.getAttribute('onclick').match(/'([^']+)'/)[1] || 'all', drinkSearchInput.value);
+            showModalMessage(`${product.name} added to cart!`, "success");
+        }
+        function removeFromCart(productId, fromReviewPage = false) { 
+            const itemIndex = cart.findIndex(item => item.id === productId);
+            if (itemIndex > -1) {
+                const productInCatalog = products.find(p => p.id === productId);
+                if (productInCatalog) productInCatalog.stock += cart[itemIndex].quantity;
+                cart.splice(itemIndex, 1);
+                if (fromReviewPage) updateCartReviewDisplay(); else updateCartDisplay();
+                 renderProducts(categoryBtns.find(b => b.classList.contains('active'))?.getAttribute('onclick').match(/'([^']+)'/)[1] || 'all', drinkSearchInput.value);
+            }
+        }
+        function updateCartDisplay() { /* For potential mini-cart */ }
+        function updateCartReviewDisplay() { 
+            const cartItemsEl = document.getElementById('cart-items-review');
+            const emptyMsgEl = document.getElementById('empty-cart-message-review');
+            const subtotalEl = document.getElementById('cart-subtotal-review');
+            const totalEl = document.getElementById('cart-total-review');
+            const feeEl = document.getElementById('delivery-fee-review');
+
+            feeEl.textContent = `₦${currentDeliveryFee.toLocaleString()}`;
+            if (cart.length === 0) {
+                cartItemsEl.innerHTML = ''; emptyMsgEl.classList.remove('hidden');
+            } else {
+                emptyMsgEl.classList.add('hidden');
+                cartItemsEl.innerHTML = cart.map(item => `
+                    <div class="flex justify-between items-center border-b border-slate-100 py-4">
+                        <div>
+                            <p class="font-semibold text-slate-700">${item.name} (x${item.quantity})</p>
+                            <p class="text-sm text-slate-500">₦${item.price.toLocaleString()} each</p>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="font-semibold text-slate-800 mr-4 text-lg">₦${(item.price * item.quantity).toLocaleString()}</span>
+                            <button onclick="removeFromCart(${item.id}, true)" class="text-red-500 hover:text-red-700 text-lg p-1 rounded-full hover:bg-red-100 transition-colors"><i class="fas fa-times-circle"></i></button>
+                        </div>
+                    </div>`).join('');
+            }
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            subtotalEl.textContent = `₦${subtotal.toLocaleString()}`;
+            totalEl.textContent = `₦${(subtotal + (cart.length > 0 ? currentDeliveryFee : 0)).toLocaleString()}`;
+        }
+
+        // --- Rating & Review ---
+        function setRating(value) { document.getElementById('selected-rating').value = value; highlightStars(value); }
+        function highlightStars(value) { document.querySelectorAll('.star-rating .fa-star').forEach(s => s.classList.toggle('selected', s.dataset.value <= value));}
+        function submitRatingReview() { 
+            const rating = document.getElementById('selected-rating').value;
+            if (rating === "0") { showModalMessage("Please select a star rating.", "error"); return; }
+            console.log("Rating:", rating, "Review:", document.getElementById('review-text').value, "Order:", currentOrderDetails.orderId);
+            showModalMessage("Thank you for your feedback!", "success");
+            resetToHome();
+        }
+
+        // --- Map & Location Logic ---
+        function populateStatesDropdown() {
+            apartmentStateSelect.innerHTML = '<option value="">Select State</option>';
+            Object.keys(nigeriaGeoData).sort().forEach(stateName => {
+                const option = document.createElement('option');
+                option.value = stateName;
+                option.textContent = stateName;
+                apartmentStateSelect.appendChild(option);
+            });
+        }
+
+        function populateCitiesDropdown(stateName) {
+            apartmentCitySelect.innerHTML = '<option value="">Select City/Town</option>';
+            apartmentCitySelect.disabled = true;
+            if (stateName && nigeriaGeoData[stateName] && nigeriaGeoData[stateName].cities) {
+                nigeriaGeoData[stateName].cities.sort().forEach(cityName => {
+                    const option = document.createElement('option');
+                    option.value = cityName;
+                    option.textContent = cityName;
+                    apartmentCitySelect.appendChild(option);
+                });
+                apartmentCitySelect.disabled = false;
+            }
+        }
+
+        function handleStateChange() {
+            const selectedStateName = apartmentStateSelect.value;
+            enteredApartmentAddress.state = selectedStateName;
+            enteredApartmentAddress.city = null; 
+            populateCitiesDropdown(selectedStateName);
+            if (selectedStateName && nigeriaGeoData[selectedStateName] && map) {
+                map.setView([nigeriaGeoData[selectedStateName].lat, nigeriaGeoData[selectedStateName].lon], nigeriaGeoData[selectedStateName].zoom -1);
+            }
+            validateLocationSelection();
+        }
+
+        function handleCityChange() {
+            const selectedCityName = apartmentCitySelect.value;
+            const selectedStateName = apartmentStateSelect.value;
+            enteredApartmentAddress.city = selectedCityName;
+
+            if (selectedStateName && selectedCityName && nigeriaGeoData[selectedStateName] && map) {
+                map.setView([nigeriaGeoData[selectedStateName].lat, nigeriaGeoData[selectedStateName].lon], nigeriaGeoData[selectedStateName].zoom + 1);
+            }
+            validateLocationSelection();
+        }
+        
+        function initMap() {
+            map = L.map('map').setView([9.0765, 7.3986], 6); 
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+            addHotelMarkers(); 
+            getUserLocationOrSetDefault();
+        }
+
+        function getUserLocationOrSetDefault(forApartmentPrefill = false) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const userLat = position.coords.latitude;
+                        const userLon = position.coords.longitude;
+                        if (map) { // Ensure map is initialized
+                           map.setView([userLat, userLon], 13);
+                            if (userMarker) map.removeLayer(userMarker);
+                            userMarker = L.marker([userLat, userLon], { icon: L.icon({ iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] }) }).addTo(map).bindPopup("Your Current Location").openPopup();
+                        }
+                        
+                        if (selectedLocationType === 'hotel') {
+                            findClosestHotel(userLat, userLon);
+                        } else if (forApartmentPrefill || selectedLocationType === 'apartment') {
+                            let closestState = null, minStateDist = Infinity;
+                            for (const stateName in nigeriaGeoData) {
+                                const stateData = nigeriaGeoData[stateName];
+                                const dist = haversineDistance(userLat, userLon, stateData.lat, stateData.lon);
+                                if (dist < minStateDist) { minStateDist = dist; closestState = stateName; }
+                            }
+                            if (closestState) {
+                                apartmentStateSelect.value = closestState;
+                                handleStateChange(); 
+                                const prominentCity = nigeriaGeoData[closestState].cities.find(c => ["abuja", "lagos island", "ikeja", "victoria island", "port harcourt"].includes(c.toLowerCase())) || nigeriaGeoData[closestState].cities[0];
+                                if(prominentCity) {
+                                    apartmentCitySelect.value = prominentCity;
+                                    handleCityChange();
+                                }
+                                showModalMessage(`Detected your approximate location: ${closestState}. Please confirm/adjust.`, "info");
+                            }
+                        }
+                    },
+                    () => { showModalMessage("Could not get your location. Please select manually.", "info"); }
+                );
+            } else {
+                showModalMessage("Geolocation is not supported by your browser.", "info");
+            }
+        }
+
+        function addHotelMarkers() { 
+            hotelMarkers.forEach(m => map.removeLayer(m)); hotelMarkers = [];
+            hotels.forEach(hotel => {
+                const marker = L.marker([hotel.lat, hotel.lon]).addTo(map)
+                    .bindPopup(`<b>${hotel.name}</b><br><button class="mt-1 text-xs btn btn-primary py-1 px-2" onclick="selectHotelById(${hotel.id})">Select Hotel</button>`);
+                marker.on('click', () => selectHotelById(hotel.id) );
+                hotelMarkers.push(marker);
+            });
+        }
+        function populateHotelList() { 
+            const listEl = document.getElementById('hotel-list'); listEl.innerHTML = '';
+            hotels.forEach(hotel => {
+                const item = document.createElement('div');
+                item.className = 'hotel-list-item border border-slate-200 p-3 rounded hover:bg-sky-50';
+                item.innerHTML = `<h4 class="font-semibold text-slate-700">${hotel.name}</h4><p class="text-sm text-slate-500">${hotel.address}</p>${hotel.deliveryFee > 0 ? `<p class="text-xs text-amber-600">Delivery: ₦${hotel.deliveryFee.toLocaleString()}</p>` : `<p class="text-xs text-green-600">Delivery fee by distance</p>`}`;
+                item.onclick = () => selectHotelById(hotel.id);
+                listEl.appendChild(item);
+            });
+        }
+        function selectHotelById(hotelId) { 
+            selectedHotel = hotels.find(h => h.id === hotelId);
+            if (selectedHotel) {
+                document.getElementById('selected-hotel-info').innerHTML = `Selected: <span class="font-bold text-sky-700">${selectedHotel.name}</span>`;
+                // Use predefined fee if it's > 0, otherwise calculate by distance
+                currentDeliveryFee = selectedHotel.deliveryFee > 0 ? selectedHotel.deliveryFee : 
+                                     Math.round(haversineDistance(MOCK_VENDOR_LOCATION.lat, MOCK_VENDOR_LOCATION.lon, selectedHotel.lat, selectedHotel.lon) * DELIVERY_FEE_PER_KM);
+                map.setView([selectedHotel.lat, selectedHotel.lon], 15);
+                document.querySelectorAll('#hotel-list .hotel-list-item').forEach(i => i.classList.remove('selected'));
+                const selItem = Array.from(document.querySelectorAll('#hotel-list .hotel-list-item')).find(i => i.textContent.includes(selectedHotel.name));
+                if(selItem) selItem.classList.add('selected');
+                validateLocationSelection();
+                updateCartReviewDisplay();
+            }
+        }
+        function haversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; const dLat = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2)**2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2)**2;
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+        }
+        function findClosestHotel(userLat, userLon) {
+            let closest = null, minDist = Infinity;
+            hotels.forEach(h => { const dist = haversineDistance(userLat, userLon, h.lat, h.lon); if (dist < minDist) { minDist = dist; closest = h; } });
+            if (closest && selectedLocationType === 'hotel') {
+                showModalMessage(`Closest hotel: ${closest.name} (${minDist.toFixed(1)} km). Auto-selecting.`, "success");
+                selectHotelById(closest.id);
+            }
+        }
+
+        // --- Modal ---
+        function showModalMessage(message, type = 'info') {
+            modalMessageText.textContent = message;
+            modalMessageText.className = 'text-slate-700 text-lg'; 
+            if (type === 'success') modalMessageText.classList.add('text-green-600');
+            else if (type === 'error') modalMessageText.classList.add('text-red-600');
+            modal.style.display = "flex";
+        }
+        function closeModal() { modal.style.display = "none"; }
+        window.onclick = function(event) { if (event.target == modal) closeModal(); }
+
+    </script>
+</body>
+</html>
