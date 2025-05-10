@@ -1,0 +1,16 @@
+{
+  "name": "HotelDrinks On Demand",
+  "short_name": "HotelDrinks",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f0f4f8",
+  "theme_color": "#38bdf8",
+  "description": "Fast drinks delivered to your hotel or apartment.",
+  "icons": [
+    {
+      "src": "https://static.wixstatic.com/media/cfe6d1_84a78396f22b49dd86d14c247efae6c0~mv2.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
