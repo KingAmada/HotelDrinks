@@ -3,7 +3,7 @@ self.addEventListener('install', e => {
     caches.open('hotel-drinks-v1').then(cache => {
       return cache.addAll([
         '/',
-        '/HotelDrinks.html',
+        '/index.html',
         '/manifest.json',
         '/sw.js'
         // Add other assets if hosted locally
