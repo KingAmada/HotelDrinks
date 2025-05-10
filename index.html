@@ -10,7 +10,10 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
+    /* ... Existing styles as in your project ... */
+
     /* All your given style but with improved responsiveness and touch area for mobile */
     :root {
       --primary-color: #38bdf8; --primary-hover-color: #0ea5e9; --primary-dark-color: #0c4a6e;
@@ -85,10 +88,36 @@
       .why-us-card,.product-card .p-5,.card,.modal-content{padding:0.3rem;}
     }
     @media (min-width: 769px) {.mobile-menu-button { display: none;} .nav-links-desktop { display: flex; } }
+    /* --- Added for enhanced UX --- */
+    #promo-banner {
+      display:none;
+      animation: fadein .5s;
+    }
+    #activity-feed-entry {
+      animation: activityFeedPop 0.6s;
+    }
+    @keyframes activityFeedPop {
+      0% { opacity: 0; transform: translateY(18px) scale(0.98);}
+      100% { opacity: 1; transform: translateY(0) scale(1);}
+    }
+    @keyframes fadein{
+      0%{opacity:0;transform:translateY(-15px);}
+      100%{opacity:1;transform:translateY(0);}
+    }
+    .animate__fadeInDown{
+      animation:fadein .9s;
+    }
+    .animate__fadeInUp{
+      animation:fadeinUp .7s;
+    }
+    @keyframes fadeinUp{
+      from{opacity:0;transform:translateY(16px);}
+      to{opacity:1;transform:translateY(0);}
+    }
   </style>
 </head>
-<body>
- <header class="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
+<body class="bg-slate-100 font-inter">
+<header class="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
@@ -390,6 +419,80 @@
         </section>
     </main>
 
+<!-- Promo Banner (+ Rotator/Timer) -->
+<div id="promo-banner" class="fixed top-20 left-1/2 z-30 -translate-x-1/2 bg-sky-700 text-white px-5 py-2 rounded shadow-lg flex items-center space-x-3 animate__animated animate__fadeInDown min-w-[280px] max-w-[98vw]">
+  <i class="fas fa-gift"></i>
+  <span id="promo-msg"></span>
+  <span id="promo-timer" class="font-bold ml-2"></span>
+</div>
+
+<!-- Main Order Section (example of integration) -->
+<section id="order" class="container mx-auto mt-16">
+  <div class="flex flex-col md:flex-row gap-8">
+    <div class="flex-1 max-w-lg w-full mx-auto">
+
+      <!-- Promo/Activity Feed Above Order Button -->
+      <div id="activity-feed" class="w-full max-w-xl mb-5 mx-auto flex flex-col items-center"></div>
+
+      <form id="order-form" class="card bg-white p-8 shadow-lg rounded-lg">
+        <!-- [Insert Your Location, Drink selection, Cart, etc here as already working in your app] -->
+        <div class="mb-6 text-center font-semibold text-xl text-sky-700">
+          Place Your Order
+        </div>
+
+        <!-- Example submit button using social proof nearby -->
+        <button type="button" id="placeOrderBtn"
+            class="w-full btn btn-primary py-3 mt-8 text-lg flex items-center justify-center gap-3">
+            <i class="fa fa-shopping-cart"></i> Order Now
+        </button>
+      </form>
+    </div>
+
+    <!-- Confirmation Modal (slides in, NOT a popup) -->
+    <div id="order-confirmation" class="flex-1 max-w-xl w-full mx-auto hidden">
+      <div class="card px-5 py-7 shadow-lg rounded-lg bg-white relative">
+        <div class="flex flex-col items-center text-center">
+          <i class="fas fa-check-circle text-green-500 text-5xl mb-3"></i>
+          <h2 class="text-2xl font-bold text-sky-800 mb-2">Order Confirmed!</h2>
+          <div class="mb-1 text-gray-600">Thanks for ordering! Your details:</div>
+          <div class="font-mono text-sky-700 text-lg mb-2">Order ID: <span id="confirmed-order-id"></span></div>
+          <hr class="my-4">
+
+          <!-- Queue/Status Display -->
+          <div id="order-queue-summary" class="flex flex-col items-center w-full">
+            <div class="font-medium text-lg">
+              Your Queue Number: <span id="queue-num" class="font-bold"></span>
+            </div>
+            <div class="text-sky-700 text-base mt-1">
+              Your Position In Queue: <span id="queue-pos" class="font-bold"></span>
+            </div>
+            <div class="flex items-center mt-1 text-xs">
+              Status: <span id="queue-status" class="ml-2 font-semibold rounded px-2 py-0.5"></span>
+            </div>
+          </div>
+
+          <!-- Delivery Progress -->
+          <div class="w-full max-w-xl mx-auto my-6">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="font-medium text-gray-600">Delivery Progress:</span>
+              <span id="delivery-status" class="font-bold"></span>
+              <span id="delivery-eta" class="bg-sky-50 text-sky-600 text-xs font-semibold rounded px-2 ml-2"></span>
+            </div>
+            <div class="w-full h-3 bg-sky-100 rounded-full mb-4 overflow-hidden">
+              <div id="progress-bar" class="h-full bg-sky-400 rounded-full transition-all duration-700" style="width:0%"></div>
+            </div>
+            <div id="delivery-map" class="w-full h-48 rounded border border-slate-200"></div>
+            <div id="delivery-map-fallback" class="w-full h-48 flex items-center justify-center text-sm text-red-600 rounded bg-slate-50 hidden">
+              Unable to track delivery. Please check your connection.
+            </div>
+          </div>
+          <button onclick="resetToHome()" class="btn btn-secondary mt-5">Back to Home</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
     <footer class="bg-slate-900 text-slate-400 py-10 mt-16">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <p>&copy; <span id="currentYear"></span> HotelDrinks On Demand. All rights reserved.</p>
@@ -405,10 +508,298 @@
     <div id="chat-widget" class="fixed bottom-6 right-6 bg-sky-500 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-xl cursor-pointer hover:bg-sky-600 transition-all duration-300 transform hover:scale-110"> <i class="fas fa-comment-dots text-2xl"></i></div>
     <div id="messageModal" class="modal"><div class="modal-content"><span class="modal-close" onclick="closeModal()">&times;</span><p id="modalMessageText" class="text-slate-700 text-lg"></p><button class="btn btn-primary mt-6 py-2 px-6" onclick="closeModal()">OK</button></div></div>
 
-<!-- At the END of your <body>, BELOW your own <script>: -->
+<!-- Notification area will be injected by JS -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
 <script>
- // --- Global State & Config ---
+  
+/**************************************************
+ * MOCKED "BACKEND" ORDER QUEUE, STATUS, ACTIVITY *
+ **************************************************/
+
+// Simulated Queue, Order, Activity, Promotions (global, but can be module-split)
+let orderQueue = []; // Array of {orderId, status, timePlaced, user, ...}
+let activityFeed = [];
+let queueListeners = [];
+let deliveryStatusListeners = [];
+let currentOrderLocal = null;
+
+// Social Proof
+const mostPopularDrink = 'Smirnoff Vodka';
+let purchaseStats = {count: 0, lastHour: 20};
+
+// Promo Offers
+const promoOffers = [
+  { msg: "🔥 5% discount! Complete checkout in", seconds: 300 },
+  { msg: "🎉 Fastest Delivery: Most orders under 5 minutes!", seconds: 0 },
+  { msg: "🚚 Orders placed now qualify for speedy delivery!", seconds: 0 }
+];
+
+// ========== ACTIVITY FEED ==========
+
+function pushActivityFeed(message) {
+  activityFeed.unshift({
+    msg: message,
+    time: new Date(),
+    id: (Math.random()+'').slice(2)
+  });
+  while(activityFeed.length > 5) activityFeed.pop();
+  updateActivityFeedUI();
+}
+
+function updateActivityFeedUI() {
+  const feed = document.getElementById("activity-feed");
+  if (!feed) return;
+  feed.innerHTML = '';
+  activityFeed.forEach(item => {
+    const div = document.createElement('div');
+    div.className = "my-1 w-full px-3 py-1.5 bg-white rounded shadow flex items-center gap-2 text-sm md:text-base border border-sky-100 animate__animated";
+    div.id = "activity-feed-entry";
+    div.innerHTML = `<i class="fas fa-bolt text-sky-400"></i><span>${item.msg}</span>`;
+    feed.appendChild(div);
+  });
+}
+
+// Seed with some activity every 20s
+setInterval(() => {
+    const samples = [
+      "A guest just bought 3 drinks",
+      "A guest just bought 6 JD Black Barrel",
+      "A guest just bought 12 Smirnoff",
+      "A guest just got fast delivery at Transcorp!",
+      "A guest just got a bottle of Heineken",
+      "A guest just ordered Red Wine (Carlo Rossi Mini)",
+      "A guest just picked up Schweppes Lemonade"
+    ];
+    pushActivityFeed(samples[Math.floor(Math.random() * samples.length)]);
+}, 20000);
+
+// ========== PROMO BANNER & TIMER ==========
+
+let promoTimeout, promoTimerInt, promoOfferIdx = 0;
+
+function showPromoBanner() {
+  const banner = document.getElementById('promo-banner');
+  const msg = document.getElementById('promo-msg');
+  const timer = document.getElementById('promo-timer');
+  const offer = promoOffers[promoOfferIdx % promoOffers.length];
+  banner.style.display = 'flex';
+  msg.textContent = offer.msg;
+  if (offer.seconds > 0) {
+    let t = offer.seconds;
+    timer.textContent = formatSeconds(t);
+    promoTimerInt && clearInterval(promoTimerInt);
+    promoTimerInt = setInterval(() => {
+      t--;
+      timer.textContent = formatSeconds(t);
+      if (t<=0) {
+        clearInterval(promoTimerInt);
+        setTimeout(()=> {
+          promoOfferIdx++; showPromoBanner();
+        }, 1500);
+      }
+    }, 1000);
+  } else {
+    timer.textContent = '';
+    promoTimeout && clearTimeout(promoTimeout);
+    promoTimeout = setTimeout(()=>{
+      promoOfferIdx++; showPromoBanner();
+    }, 7000);
+  }
+}
+function formatSeconds(t) {
+  let m = Math.floor(t/60), s = t%60;
+  return `${m}:${s<10?'0':''}${s}`;
+}
+document.addEventListener('DOMContentLoaded', () => {
+  showPromoBanner();
+});
+
+// ========== SOCIAL PROOF ==========
+
+function updateSocialProof() {
+  const proofPlace = document.getElementById("activity-feed");
+  if (!proofPlace) return;
+  let proofMsg = '';
+  const now = new Date(), min = now.getMinutes();
+  if (min % 4 === 0 || min%4===1)
+    proofMsg = `<div class="w-full mb-2 px-3 py-1.5 bg-green-50 text-green-700 font-medium rounded text-center">🍹 ${purchaseStats.lastHour} guests have ordered drinks in the last hour!</div>`;
+  else
+    proofMsg = `<div class="w-full mb-2 px-3 py-1.5 bg-yellow-50 text-yellow-700 font-medium rounded text-center">Most popular choice now: <span class="font-bold">${mostPopularDrink}</span>!</div>`;
+  proofPlace.insertAdjacentHTML('beforeend', proofMsg);
+}
+setInterval(updateSocialProof, 180000);
+
+// ========== ORDER QUEUE + DELIVERY TRACKING ==========
+function postMockOrder(order) {
+  order.queueNum = orderQueue.length+1;
+  order.status = 'Preparing';
+  order.timePlaced = Date.now();
+  order.deliveryProgress = 0;
+  order.deliveryStatus = 'Preparing';
+  order.driver = {lat: 6.5871, lng: 3.3705, heading: 68};
+  order.eta = 300 + Math.floor(Math.random()*60); // 5-6 minutes initial
+  order.deliveryStarted = false;
+  order._intervals = {};
+  orderQueue.push(order);
+
+  pushActivityFeed(`A guest just bought ${order.items?.length||1} item${order.items&&order.items.length>1?'s':''}`);
+
+  purchaseStats.count++;
+  purchaseStats.lastHour += Math.floor(Math.random()*2);
+
+  notifyOrderQueueUpdated();
+  return order;
+}
+function getOrderQueuePosition(orderId) {
+  let idx = orderQueue.findIndex(o=>o.orderId===orderId);
+  return idx === -1 ? null : idx+1;
+}
+function advanceOrderQueue() {
+  // Every 12s, advance top-order
+  if (orderQueue.length > 0) {
+    let o = orderQueue[0];
+    if (o.status==='Preparing') {
+      o.status = 'Out for Delivery';
+      o.deliveryStatus = 'En Route';
+      o.deliveryStarted = Date.now();
+    }
+    else if (o.status==='Out for Delivery') {
+      o.status = 'Delivered';
+      o.deliveryStatus = 'Delivered';
+      setTimeout(()=> {
+        orderQueue.shift();
+        notifyOrderQueueUpdated();
+      }, 5000);
+    }
+    notifyOrderQueueUpdated();
+  }
+}
+setInterval(advanceOrderQueue, 12000);
+
+function notifyOrderQueueUpdated() {
+  queueListeners.forEach(cb=>cb());
+  deliveryStatusListeners.forEach(cb=>cb());
+}
+function subscribeOrderQueue(cb) { queueListeners.push(cb); }
+function subscribeDeliveryStatus(cb) { deliveryStatusListeners.push(cb); }
+
+function setupOrderStatusUI(order) {
+  const queueNumEl = document.getElementById('queue-num');
+  const queuePosEl = document.getElementById('queue-pos');
+  const queueStatusEl = document.getElementById('queue-status');
+  const deliveryStatusEl = document.getElementById('delivery-status');
+  const deliveryEtaEl = document.getElementById('delivery-eta');
+  const progressBar = document.getElementById('progress-bar');
+
+  function updateStatus() {
+    const pos = getOrderQueuePosition(order.orderId);
+    queueNumEl && (queueNumEl.textContent = order.queueNum);
+    queuePosEl && (queuePosEl.textContent = pos !== null ? pos : "-");
+    queueStatusEl && (queueStatusEl.textContent = order.status);
+    queueStatusEl.className = "ml-2 font-semibold rounded px-2 py-0.5 " +
+      (order.status === 'Preparing' ? 'bg-yellow-50 text-yellow-600'
+      : order.status === 'Out for Delivery' ? 'bg-blue-100 text-blue-600'
+      : 'bg-green-100 text-green-600');
+    deliveryStatusEl && (deliveryStatusEl.textContent = order.deliveryStatus);
+    deliveryEtaEl && (deliveryEtaEl.textContent = formatSeconds(order.eta));
+    progressBar.style.width = order.status === 'Preparing'
+      ? '12%' :
+      order.status === 'Out for Delivery'
+      ? '70%' : '100%';
+  }
+  subscribeOrderQueue(updateStatus);
+  subscribeDeliveryStatus(updateStatus);
+  updateStatus();
+}
+
+// =========== NOTIFICATION SYSTEM ===============
+function notifyUserOfOrder(order, msg, icon="fa-bell") {
+  const notif = document.createElement("div");
+  notif.className = "fixed bottom-4 right-4 z-50 bg-sky-700 text-white px-5 py-2 rounded shadow-lg flex items-center space-x-3 animate__animated animate__fadeInUp";
+  notif.innerHTML = `<i class="fas ${icon}"></i><span class="font-medium">${msg}</span>`;
+  document.body.appendChild(notif);
+  setTimeout(()=> notif.remove(), 2800);
+}
+
+// =========== DELIVERY MAP MOCK TRACKING ===========
+function setupDeliveryMap(order) {
+  let deliveryMap;
+  let mapFallbackEl = document.getElementById('delivery-map-fallback');
+  let marker = null;
+
+  function showMapError() {
+    document.getElementById('delivery-map').style.display = "none";
+    mapFallbackEl.style.display = "flex";
+  }
+
+  function updateMarker() {
+    if (!deliveryMap || !marker) return;
+    if (!order.driver) return showMapError();
+    let secondsSinceStart = (order.deliveryStarted ? ((Date.now() - order.deliveryStarted) / 1000) : 0) || 0;
+    let total = order.eta;
+    let percent = Math.min(1, secondsSinceStart / total);
+    let dest = { lat: 6.4281, lng: 3.4216 }; // Use Eko Hotel Lagos coords
+    let lat = 6.5871 + percent * (dest.lat - 6.5871);
+    let lng = 3.3705 + percent * (dest.lng - 3.3705);
+    marker.setLatLng([lat, lng]);
+    deliveryMap.setView([lat, lng], 13);
+  }
+
+  function createMap() {
+    try {
+      deliveryMap = L.map('delivery-map').setView([6.5871, 3.3705], 11);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+        attribution: '&copy; OpenStreetMap contributors' 
+      }).addTo(deliveryMap);
+      marker = L.marker([6.5871, 3.3705]).addTo(deliveryMap);
+      deliveryMap.on("error", showMapError);
+    } catch(e) {
+      showMapError();
+    }
+  }
+  createMap();
+
+  let mapInt = setInterval(() => {
+    if (!deliveryMap) return;
+    if (Math.random() < 0.03) {
+      showMapError(); clearInterval(mapInt);
+      return;
+    }
+    updateMarker();
+  }, 1500);
+}
+
+// =========== CLICK TO SIMULATE ORDER ===========
+document.getElementById('placeOrderBtn').onclick = () => {
+  // Hide form, show confirmation section:
+  document.getElementById('order-form').style.display = "none";
+  document.getElementById('order-confirmation').style.display = "block";
+  let fakeOrderId = "HOD" + Math.floor(Math.random() * 90000 + 10000);
+  document.getElementById('confirmed-order-id').textContent = fakeOrderId;
+  currentOrderLocal = postMockOrder({
+    orderId: fakeOrderId,
+    user: "Demo Guest",
+    items: [{name:"Smirnoff Vodka"}]
+  });
+  setupOrderStatusUI(currentOrderLocal);
+  notifyUserOfOrder(currentOrderLocal,"Order Confirmed! Status: Preparing","fa-circle-check");
+  subscribeDeliveryStatus(()=>{
+    if (!currentOrderLocal) return;
+    if (currentOrderLocal.status === "Out for Delivery") notifyUserOfOrder(currentOrderLocal,"Your drink is on the way!","fa-truck");
+    if (currentOrderLocal.status === "Delivered") notifyUserOfOrder(currentOrderLocal,"Order delivered! Enjoy!","fa-champagne-glasses");
+  });
+  setTimeout(()=> {
+    if(currentOrderLocal) setupDeliveryMap(currentOrderLocal);
+  }, 1250);
+};
+
+function resetToHome() {
+  document.getElementById('order-form').style.display = "block";
+  document.getElementById('order-confirmation').style.display = "none";
+}
+   // --- Global State & Config ---
         let currentLoggedInUser = null; 
         let currentOrderDetails = { orderId: null, locationName: null };
         let currentDeliveryFee = 0; // NGN
@@ -1078,8 +1469,9 @@
       );
     });
   }
-</script>
     
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+</script>
 </body>
 </html>
