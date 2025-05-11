@@ -1619,6 +1619,16 @@ function setupDeliveryMap(order, mapContainerId = 'delivery-map-live') {
             }
             deliveryStatusListeners = deliveryStatusListeners.filter(cb => cb !== onDeliveryStatusChange); subscribeDeliveryStatus(onDeliveryStatusChange);
             setTimeout(()=> { if(currentOrderLocal) setupDeliveryMap(currentOrderLocal, 'delivery-map-live'); }, 1250);
+          const grandSave = getTotalSavings();
+confirmationStepContainer.querySelector("#order-queue-summary")
+  .insertAdjacentHTML("afterend",
+    `<p class="mt-4 text-lg font-semibold text-red-600">
+       Hotel wanted to rip you off by ₦${grandSave.toLocaleString()} on this order!<br>
+       <span class="text-slate-700 font-normal">
+         Complete checkout now & get an extra 5 % off 👀
+       </span>
+     </p>`);
+
           clearCart();
         }
 
@@ -1701,7 +1711,9 @@ function setupDeliveryMap(order, mapContainerId = 'delivery-map-live') {
             categoryBtns.forEach(btn => { btn.classList.remove('active', 'bg-sky-500', 'text-white'); btn.classList.add('bg-slate-200', 'text-slate-700', 'hover:bg-sky-100');});
             btnElement.classList.add('active', 'bg-sky-500', 'text-white');
             btnElement.classList.remove('bg-slate-200', 'text-slate-700', 'hover:bg-sky-100');}
-
+function getTotalSavings() {
+  return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+}
         function addToCart(productId) {
             const product = products.find(p => p.id === productId);
             if (!product || product.stock <= 0) { showModalMessage("This item is out of stock."); return; }
@@ -1714,9 +1726,10 @@ function setupDeliveryMap(order, mapContainerId = 'delivery-map-live') {
                 cart.push({ ...product, quantity: 1, originalStock: product.stock }); // Store original stock if needed, or manage stock differently
             }
             product.stock--; // This stock management needs to be robust with localStorage cart
+          const saving = product.price; 
             updateCartDisplay();
             renderProducts(categoryBtns.find(b => b.classList.contains('active'))?.getAttribute('onclick').match(/'([^']+)'/)[1] || 'all', drinkSearchInput.value);
-            showModalMessage(`${product.name} added to cart!`, "success");
+            showModalMessage(`${product.name} added to cart!\nYou save ₦${saving.toLocaleString()} on this drink 😊`, "success");
             saveCartToLocalStorage();
         }
 
@@ -1895,6 +1908,14 @@ function setupDeliveryMap(order, mapContainerId = 'delivery-map-live') {
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             if(subtotalEl) subtotalEl.textContent = `₦${subtotal.toLocaleString()}`;
             if(totalEl) totalEl.textContent = `₦${(subtotal + (cart.length > 0 ? currentDeliveryFee : 0)).toLocaleString()}`;
+          const savingsRow = `
+  <div class="flex justify-between items-center mb-2">
+    <span class="text-slate-600">Your savings so far:</span>
+    <span class="font-semibold text-green-600">₦${getTotalSavings().toLocaleString()}</span>
+  </div>`;
+
+feeEl.insertAdjacentHTML("afterend", savingsRow);
+
         }
 
         // --- Rating & Review ---
