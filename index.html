@@ -1534,7 +1534,6 @@ function setupDeliveryMap(order, mapContainerId = 'delivery-map-live') {
         }
 
         function confirmAndPlaceOrder() {
-          clearCart();
             const roomNumber = document.getElementById('checkout-room-number').value;
             const guestName = document.getElementById('checkout-guest-name').value;
             if (!roomNumber.trim() || !guestName.trim()) { showModalMessage("Please enter Room/Apt Number and Your Name.", "error"); return; }
@@ -1577,6 +1576,7 @@ function setupDeliveryMap(order, mapContainerId = 'delivery-map-live') {
             }
             deliveryStatusListeners = deliveryStatusListeners.filter(cb => cb !== onDeliveryStatusChange); subscribeDeliveryStatus(onDeliveryStatusChange);
             setTimeout(()=> { if(currentOrderLocal) setupDeliveryMap(currentOrderLocal, 'delivery-map-live'); }, 1250);
+          clearCart();
         }
 
         function proceedToRating() { document.getElementById('rating-order-id').textContent = `${currentOrderDetails.orderId}`;
