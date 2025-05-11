@@ -1878,45 +1878,60 @@ function getTotalSavings() {
         }
 
         function updateCartReviewDisplay() {
-            const cartItemsEl = document.getElementById('cart-items-review');
-            const emptyMsgEl = document.getElementById('empty-cart-message-review');
-            const subtotalEl = document.getElementById('cart-subtotal-review');
-            const totalEl = document.getElementById('cart-total-review');
-            const feeEl = document.getElementById('delivery-fee-review');
+  const cartItemsEl  = document.getElementById('cart-items-review');
+  const emptyMsgEl   = document.getElementById('empty-cart-message-review');
+  const subtotalEl   = document.getElementById('cart-subtotal-review');
+  const totalEl      = document.getElementById('cart-total-review');
+  const feeEl        = document.getElementById('delivery-fee-review');
+  
+  /* ---------- 1.  build / refresh the cart lines ---------- */
+  if (cart.length === 0) {
+    cartItemsEl.innerHTML = '';
+    emptyMsgEl.classList.remove('hidden');
+  } else {
+    emptyMsgEl.classList.add('hidden');
+    cartItemsEl.innerHTML = cart.map(item => `
+      <div class="flex justify-between items-center border-b border-slate-100 py-4">
+        <div>
+          <p class="font-semibold text-slate-700">
+            ${item.name} (x${item.quantity})
+          </p>
+          <p class="text-sm text-slate-500">
+            ₦${item.price.toLocaleString()} each
+          </p>
+        </div>
+        <span class="font-semibold text-slate-800 text-lg">
+          ₦${(item.price * item.quantity).toLocaleString()}
+        </span>
+      </div>
+    `).join('');
+  }
 
-            if (!feeEl) return; // Exit if elements aren't on the current page/step
-            feeEl.textContent = `₦${currentDeliveryFee.toLocaleString()}`;
-            if (cart.length === 0) {
-                if(cartItemsEl) cartItemsEl.innerHTML = '';
-                if(emptyMsgEl) emptyMsgEl.classList.remove('hidden');
-            } else {
-                if(emptyMsgEl) emptyMsgEl.classList.add('hidden');
-                if(cartItemsEl) {
-                     cartItemsEl.innerHTML = cart.map(item => `
-                        <div class="flex justify-between items-center border-b border-slate-100 py-4">
-                            <div>
-                                <p class="font-semibold text-slate-700">${item.name} (x${item.quantity})</p>
-                                <p class="text-sm text-slate-500">₦${item.price.toLocaleString()} each</p>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="font-semibold text-slate-800 mr-4 text-lg">₦${(item.price * item.quantity).toLocaleString()}</span>
-                                <!-- No remove button here, manage from cart view modal or main product list -->
-                            </div>
-                        </div>`).join('');
-                }
-            }
-            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            if(subtotalEl) subtotalEl.textContent = `₦${subtotal.toLocaleString()}`;
-            if(totalEl) totalEl.textContent = `₦${(subtotal + (cart.length > 0 ? currentDeliveryFee : 0)).toLocaleString()}`;
-          const savingsRow = `
-  <div class="flex justify-between items-center mb-2">
+  /* ---------- 2.  numbers: subtotal, fee, total ---------- */
+  const subtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  subtotalEl.textContent = `₦${subtotal.toLocaleString()}`;
+  feeEl.textContent      = `₦${currentDeliveryFee.toLocaleString()}`;
+  totalEl.textContent    = `₦${(subtotal + (cart.length ? currentDeliveryFee : 0)).toLocaleString()}`;
+
+  /* ---------- 3.  SINGLE “savings” row ---------- */
+  const savings = getTotalSavings().toLocaleString();
+  let savingsRow = document.getElementById('savings-row');
+
+  // create once, right after the Delivery‑Fee row
+  if (!savingsRow) {
+    savingsRow = document.createElement('div');
+    savingsRow.id = 'savings-row';
+    savingsRow.className = 'flex justify-between items-center mb-2';
+    feeEl.after(savingsRow);          // insert only once
+  }
+
+  // always refresh the text
+  savingsRow.innerHTML = `
     <span class="text-slate-600">Your savings so far:</span>
-    <span class="font-semibold text-green-600">₦${getTotalSavings().toLocaleString()}</span>
-  </div>`;
+    <span class="font-semibold text-green-600">₦${savings}</span>
+  `;
+}
 
-feeEl.insertAdjacentHTML("afterend", savingsRow);
-
-        }
 
         // --- Rating & Review ---
         function setRating(value) { document.getElementById('selected-rating').value = value; highlightStars(value); }
