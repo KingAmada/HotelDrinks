@@ -589,30 +589,30 @@
                         <!-- Additional images for slideshow will be populated by JS if logic exists, or add them manually -->
                     </div>
                 </div>
-               <div class="absolute inset-x-0 bottom-0 left-0 w-full overflow-hidden leading-none">
-        <svg class="waves block w-full h-[120px]"   <!-- change the h‑[] to taste -->
-             xmlns="http://www.w3.org/2000/svg"
-             viewBox="0 24 150 28"
-             preserveAspectRatio="none"
-             shape-rendering="auto">
-            <defs>
-                <path id="gentle-wave"
-                      d="M-160 44c30 0 58-18 88-18s58 18 88 18
-                         58-18 88-18 58 18 88 18v44h-352z" />
-            </defs>
+               <!-- put this just before </div><!-- hero-gradient-animated END --> -->
+<div class="absolute inset-x-0 bottom-0 overflow-hidden" style="line-height:0">  <!-- line‑height:0 kills baseline -->
+  <svg
+    class="waves block w-full h-[120px] translate-y-[6px]"   <!-- ⬅ tiny downward nudge -->
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 24 150 28"      <!-- keep the original wave -->
+    preserveAspectRatio="none"
+    shape-rendering="auto">
 
-            <!-- the four layers -->
-            <g class="parallax">
-                <use href="#gentle-wave" x="48" y="0"
-                     fill="rgba(255,255,255,0.70)" />
-                <use href="#gentle-wave" x="48" y="3"
-                     fill="rgba(255,255,255,0.50)" />
-                <use href="#gentle-wave" x="48" y="5"
-                     fill="rgba(255,255,255,0.30)" />
-                <use href="#gentle-wave" x="48" y="7" fill="#ffffff" />
-            </g>
-        </svg>
-    </div>
+    <defs>
+      <path id="gentle-wave"
+            d="M-160 44c30 0 58-18 88-18s58 18 88 18
+               58-18 88-18 58 18 88 18v44h-352z"/>
+    </defs>
+
+    <g class="parallax">
+      <use href="#gentle-wave" x="48" y="0" fill="rgba(255,255,255,0.70)" />
+      <use href="#gentle-wave" x="48" y="3" fill="rgba(255,255,255,0.50)" />
+      <use href="#gentle-wave" x="48" y="5" fill="rgba(255,255,255,0.30)" />
+      <use href="#gentle-wave" x="48" y="7" fill="#ffffff" />
+    </g>
+  </svg>
+</div>
+
             </div>
             <section class="py-16 md:py-20">
                 <h2 class="text-3xl md:text-4xl font-bold text-[var(--primary-dark-color)] mb-12 text-center animate-on-scroll">Why Choose HotelDrinks?</h2>
