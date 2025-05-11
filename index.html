@@ -1662,7 +1662,7 @@ function setupDeliveryMap(order, mapContainerId = 'delivery-map-live') {
             } else {
                 cart.push({ ...product, quantity: 1, originalStock: product.stock }); // Store original stock if needed, or manage stock differently
             }
-            // product.stock--; // This stock management needs to be robust with localStorage cart
+            product.stock--; // This stock management needs to be robust with localStorage cart
             updateCartDisplay();
             renderProducts(categoryBtns.find(b => b.classList.contains('active'))?.getAttribute('onclick').match(/'([^']+)'/)[1] || 'all', drinkSearchInput.value);
             showModalMessage(`${product.name} added to cart!`, "success");
