@@ -19,6 +19,7 @@
     <meta name="twitter:image" content="https://static.wixstatic.com/media/cfe6d1_78032b33403248fa9e115d7d1cbf037a~mv2.png">
     <meta name="twitter:url" content="https://kingamada.github.io/HotelDrinks/index.html">
   <!-- put just above your Tailwind script -->
+  
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
@@ -1878,57 +1879,51 @@ function getTotalSavings() {
         }
 
         function updateCartReviewDisplay() {
-  const cartItemsEl  = document.getElementById('cart-items-review');
-  const emptyMsgEl   = document.getElementById('empty-cart-message-review');
-  const subtotalEl   = document.getElementById('cart-subtotal-review');
-  const totalEl      = document.getElementById('cart-total-review');
-  const feeEl        = document.getElementById('delivery-fee-review');
+            const cartItemsEl = document.getElementById('cart-items-review');
+            const emptyMsgEl = document.getElementById('empty-cart-message-review');
+            const subtotalEl = document.getElementById('cart-subtotal-review');
+            const totalEl = document.getElementById('cart-total-review');
+            const feeEl = document.getElementById('delivery-fee-review');
 
-            if (!cartItemsEl || !emptyMsgEl || !subtotalEl || !totalEl || !feeEl) return;
-
-  /* ---------- 1.  build / refresh the cart lines ---------- */
-  if (cart.length === 0) {
-    cartItemsEl.innerHTML = '';
-    emptyMsgEl.classList.remove('hidden');
-  } else {
-    emptyMsgEl.classList.add('hidden');
-    cartItemsEl.innerHTML = cart.map(item => `
-      <div class="flex justify-between items-center border-b border-slate-100 py-4">
-        <div>
-          <p class="font-semibold text-slate-700">
-            ${item.name} (x${item.quantity})
-          </p>
-          <p class="text-sm text-slate-500">
-            ₦${item.price.toLocaleString()} each
-          </p>
-        </div>
-        <span class="font-semibold text-slate-800 text-lg">
-          ₦${(item.price * item.quantity).toLocaleString()}
-        </span>
-      </div>
-    `).join('');
-  }
-
-  const subtotal = cart.reduce((s,i)=>s+i.price*i.quantity,0);
-  subtotalEl.textContent = `₦${subtotal.toLocaleString()}`;
-  feeEl.textContent      = `₦${currentDeliveryFee.toLocaleString()}`;
-  totalEl.textContent    = `₦${(subtotal + (cart.length ? currentDeliveryFee : 0)).toLocaleString()}`;
-
-  /* ---- single savings row logic (unchanged) ---- */
-  const savings = getTotalSavings().toLocaleString();
-  let savingsRow = document.getElementById('savings-row');
-  if (!savingsRow) {
+            if (!feeEl) return; // Exit if elements aren't on the current page/step
+            feeEl.textContent = ₦${currentDeliveryFee.toLocaleString()};
+            if (cart.length === 0) {
+                if(cartItemsEl) cartItemsEl.innerHTML = '';
+                if(emptyMsgEl) emptyMsgEl.classList.remove('hidden');
+            } else {
+                if(emptyMsgEl) emptyMsgEl.classList.add('hidden');
+                if(cartItemsEl) {
+                     cartItemsEl.innerHTML = cart.map(item => 
+                        <div class="flex justify-between items-center border-b border-slate-100 py-4">
+                            <div>
+                                <p class="font-semibold text-slate-700">${item.name} (x${item.quantity})</p>
+                                <p class="text-sm text-slate-500">₦${item.price.toLocaleString()} each</p>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="font-semibold text-slate-800 mr-4 text-lg">₦${(item.price * item.quantity).toLocaleString()}</span>
+                                <!-- No remove button here, manage from cart view modal or main product list -->
+                            </div>
+                        </div>).join('');
+                }
+            }
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            if(subtotalEl) subtotalEl.textContent = ₦${subtotal.toLocaleString()};
+            if(totalEl) totalEl.textContent = ₦${(subtotal + (cart.length > 0 ? currentDeliveryFee : 0)).toLocaleString()};
+            let savingsRow = document.getElementById('savings-row');
+  if (!savingsRow) {                      // first run ⇒ build the element
     savingsRow = document.createElement('div');
     savingsRow.id        = 'savings-row';
     savingsRow.className = 'flex justify-between items-center mb-2';
-    feeEl.after(savingsRow);
+    feeEl.insertAdjacentElement('afterend', savingsRow);
   }
+
   savingsRow.innerHTML = `
     <span class="text-slate-600">Your savings so far:</span>
-    <span class="font-semibold text-green-600">₦${savings}</span>
-  `;
-}
+    <span class="font-semibold text-green-600">
+      ₦${getTotalSavings().toLocaleString()}
+    </span>`;
 
+        }
 
         // --- Rating & Review ---
         function setRating(value) { document.getElementById('selected-rating').value = value; highlightStars(value); }
