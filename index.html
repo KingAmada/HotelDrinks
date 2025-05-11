@@ -1883,7 +1883,9 @@ function getTotalSavings() {
   const subtotalEl   = document.getElementById('cart-subtotal-review');
   const totalEl      = document.getElementById('cart-total-review');
   const feeEl        = document.getElementById('delivery-fee-review');
-  
+
+            if (!cartItemsEl || !emptyMsgEl || !subtotalEl || !totalEl || !feeEl) return;
+
   /* ---------- 1.  build / refresh the cart lines ---------- */
   if (cart.length === 0) {
     cartItemsEl.innerHTML = '';
@@ -1907,25 +1909,20 @@ function getTotalSavings() {
     `).join('');
   }
 
-  /* ---------- 2.  numbers: subtotal, fee, total ---------- */
-  const subtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const subtotal = cart.reduce((s,i)=>s+i.price*i.quantity,0);
   subtotalEl.textContent = `₦${subtotal.toLocaleString()}`;
   feeEl.textContent      = `₦${currentDeliveryFee.toLocaleString()}`;
   totalEl.textContent    = `₦${(subtotal + (cart.length ? currentDeliveryFee : 0)).toLocaleString()}`;
 
-  /* ---------- 3.  SINGLE “savings” row ---------- */
+  /* ---- single savings row logic (unchanged) ---- */
   const savings = getTotalSavings().toLocaleString();
   let savingsRow = document.getElementById('savings-row');
-
-  // create once, right after the Delivery‑Fee row
   if (!savingsRow) {
     savingsRow = document.createElement('div');
-    savingsRow.id = 'savings-row';
+    savingsRow.id        = 'savings-row';
     savingsRow.className = 'flex justify-between items-center mb-2';
-    feeEl.after(savingsRow);          // insert only once
+    feeEl.after(savingsRow);
   }
-
-  // always refresh the text
   savingsRow.innerHTML = `
     <span class="text-slate-600">Your savings so far:</span>
     <span class="font-semibold text-green-600">₦${savings}</span>
@@ -2066,6 +2063,9 @@ function getTotalSavings() {
                 document.querySelectorAll('#hotel-list .hotel-list-item').forEach(i => i.classList.remove('selected'));
                 const selItem = Array.from(document.querySelectorAll('#hotel-list .hotel-list-item')).find(i => i.textContent.includes(selectedHotel.name));
                 if(selItem) selItem.classList.add('selected');
+                if (typeof map !== 'undefined' && map) {
+    map.setView([selectedHotel.lat, selectedHotel.lon], 15);
+  }
                 validateLocationSelection();
                 updateCartReviewDisplay();
             }
