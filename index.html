@@ -1681,10 +1681,10 @@ confirmationStepContainer.querySelector("#order-queue-summary")
                             <div class="flex justify-between items-center mb-4">
                                 <div class="flex flex-col">
   <span class="text-sm line-through text-slate-400">
-    ₦${(product.price * 2).toLocaleString()}
+    Hotel Price: ₦${(product.price * 2).toLocaleString()}
   </span>
   <span class="text-2xl font-bold text-sky-600">
-    ₦${product.price.toLocaleString()}
+   Our Price: ₦${product.price.toLocaleString()}
   </span>
 </div>
                                 ${product.stock > 0 ? `<span class="text-xs font-medium ${product.stock < 5 ? 'text-amber-600 bg-amber-100' : 'text-green-600 bg-green-100'} px-2.5 py-1 rounded-full">${product.stock} left</span>` : '<span class="text-xs font-medium text-red-600 bg-red-100 px-2.5 py-1 rounded-full">Out of Stock</span>'}
