@@ -1534,6 +1534,7 @@ function setupDeliveryMap(order, mapContainerId = 'delivery-map-live') {
         }
 
         function confirmAndPlaceOrder() {
+          clearCart();
             const roomNumber = document.getElementById('checkout-room-number').value;
             const guestName = document.getElementById('checkout-guest-name').value;
             if (!roomNumber.trim() || !guestName.trim()) { showModalMessage("Please enter Room/Apt Number and Your Name.", "error"); return; }
