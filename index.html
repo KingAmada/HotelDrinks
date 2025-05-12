@@ -1893,7 +1893,7 @@ function getTotalSavings() {
             } else {
                 if(emptyMsgEl) emptyMsgEl.classList.add('hidden');
                 if(cartItemsEl) {
-                     cartItemsEl.innerHTML = cart.map(item => 
+                     cartItemsEl.innerHTML = cart.map(item => `
                         <div class="flex justify-between items-center border-b border-slate-100 py-4">
                             <div>
                                 <p class="font-semibold text-slate-700">${item.name} (x${item.quantity})</p>
@@ -1903,7 +1903,7 @@ function getTotalSavings() {
                                 <span class="font-semibold text-slate-800 mr-4 text-lg">₦${(item.price * item.quantity).toLocaleString()}</span>
                                 <!-- No remove button here, manage from cart view modal or main product list -->
                             </div>
-                        </div>).join('');
+                        </div>`).join('');
                 }
             }
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
