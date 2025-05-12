@@ -1886,7 +1886,7 @@ function getTotalSavings() {
             const feeEl = document.getElementById('delivery-fee-review');
 
             if (!feeEl) return; // Exit if elements aren't on the current page/step
-            feeEl.textContent = ₦${currentDeliveryFee.toLocaleString()};
+            feeEl.textContent = `₦${currentDeliveryFee.toLocaleString()}`;
             if (cart.length === 0) {
                 if(cartItemsEl) cartItemsEl.innerHTML = '';
                 if(emptyMsgEl) emptyMsgEl.classList.remove('hidden');
@@ -1907,8 +1907,8 @@ function getTotalSavings() {
                 }
             }
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            if(subtotalEl) subtotalEl.textContent = ₦${subtotal.toLocaleString()};
-            if(totalEl) totalEl.textContent = ₦${(subtotal + (cart.length > 0 ? currentDeliveryFee : 0)).toLocaleString()};
+            if(subtotalEl) subtotalEl.textContent = `₦${subtotal.toLocaleString()}`;
+            if(totalEl) totalEl.textContent = `₦${(subtotal + (cart.length ? currentDeliveryFee : 0)).toLocaleString()}`;
             let savingsRow = document.getElementById('savings-row');
   if (!savingsRow) {                      // first run ⇒ build the element
     savingsRow = document.createElement('div');
