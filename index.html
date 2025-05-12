@@ -1624,10 +1624,7 @@ function setupDeliveryMap(order, mapContainerId = 'delivery-map-live') {
 confirmationStepContainer.querySelector("#order-queue-summary")
   .insertAdjacentHTML("afterend",
     `<p class="mt-4 text-lg font-semibold text-red-600">
-       Hotel wanted to rip you off by ₦${grandSave.toLocaleString()} on this order!<br>
-       <span class="text-slate-700 font-normal">
-         Complete checkout now & get an extra 5 % off 👀
-       </span>
+       Hotel wanted to rip you off, but we save you ₦${grandSave.toLocaleString()} on this order!<br>
      </p>`);
 
           clearCart();
